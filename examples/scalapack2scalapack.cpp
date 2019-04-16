@@ -7,7 +7,7 @@
 
 // Local
 #include <transform.hpp>
-#include <math_utils.hpp>
+#include <cantor_mapping.hpp>
 #include <options.hpp>
 
 using namespace grid2grid;
@@ -41,7 +41,7 @@ int main( int argc, char **argv ) {
     }
 
     auto values = [](int i, int j) {
-        return 1.0 * cantor_pairing(i, j);
+        return 1.0 * grid2grid::cantor_pairing(i, j);
     };
 
     auto zeros = [](int i, int j) {
