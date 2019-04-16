@@ -1,0 +1,38 @@
+#pragma once
+#include <tuple>
+#include <iostream>
+#include <vector>
+#include <stdexcept>
+
+// A class describing the interval [start, end)
+namespace grid2grid {
+struct interval {
+    int start = 0;
+    int end = 0;
+    int len = 0;
+
+    interval() = default;
+
+    interval(int start, int end);
+
+    int length() const;
+
+    // an interval contains
+    bool contains(interval other) const;
+
+    bool non_empty() const;
+
+    /*
+        finds intervals from v that overlap with [start, end),
+        i.e. finds start_index and end_index
+        (where 0 <= start_index < end_index < v.size())
+        that satisfy the following:
+          * start_index = max i such that v[i] <= start
+          * end_index = min i such that v[i] >= end
+     */
+    std::pair<int, int> overlapping_intervals(const std::vector<int> &v) const;
+};
+
+std::ostream &operator<<(std::ostream &os, const interval &other);
+}
+
