@@ -1,4 +1,3 @@
-
 # grid2grid
 
 This is a library that transforms a matrix between two arbitrary grid-like data layouts. By layout, we mean the way in which a matrix is distributed over MPI ranks.
@@ -67,7 +66,7 @@ The pipeline of the algorithm is roughly the following:
 ## Building and Installing
 
 Assuming that you want to use the `gcc 8` compiler and `OpenMP`, you can build the project as follows:
-```
+```bash
 # clone the repo
 git clone https://github.com/kabicm/grid2grid
 cd grid2grid
@@ -84,7 +83,7 @@ make -j 4
 ## Example
 
 To start with, there is a small example that transforms the matrix between two block-cyclic layouts. This example can be run from `build` directory as follows:
-```
+```bash
 mpirun --oversubscribe -np 4 ./examples/scalapack2scalapack -m 10 -n 10 -ibm 2 -ibn 3 -fbm 3 -fbn 5 -pm 2 -pn 2
 ```
 Where flags have the following meaning:
@@ -96,7 +95,7 @@ Where flags have the following meaning:
 ## Arbitrary Grid-Like Data Layouts
 
 To transform between two arbitrary grid-like data layouts, we need to construct two `grid_layout` objects, one describing the initial layout and one describing the final layout. After that, we just invoke:
-```
+```cpp
 grid2grid::grid_layout initial_layout(...);
 grid2grid::grid_layout final_layout(...);
 grid2grid::transform(initial_layout, final_layout, MPI_COMM_WORLD);

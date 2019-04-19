@@ -4,7 +4,7 @@
 
 set(sources
     mpi_type_wrapper.hpp
-    math_utils.hpp
+    cantor_mapping.hpp
     block.hpp
     grid2D.cpp
     interval.cpp
