@@ -1,7 +1,8 @@
+#pragma once
+#include <iostream>
 #include <string>
 #include <regex>
 #include <stdexcept>
-#include <iostream>
 
 namespace options {
     static std::string command_line;

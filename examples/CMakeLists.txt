@@ -2,7 +2,7 @@
 #  Build test  #
 ################
 add_executable(scalapack2scalapack "scalapack2scalapack.cpp")
-target_link_libraries(scalapack2scalapack grid2grid options ${DEPENDENCIES})
+target_link_libraries(scalapack2scalapack grid2grid ${DEPENDENCIES} options)
 
 ################
 #  unit gtests #

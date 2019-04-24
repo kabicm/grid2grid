@@ -2,4 +2,4 @@
 #    Command-line options    #
 ##############################
 set(sources options.cpp)
-add_library(options ${sources})
+add_library(options SHARED ${sources})

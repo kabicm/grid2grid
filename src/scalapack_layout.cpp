@@ -99,4 +99,12 @@ local_blocks get_local_blocks(matrix_grid mat_grid, rank_decomposition r_grid,
 
     return {n_owning_blocks_row, n_owning_blocks_col, b_dim, rank_coord};
 }
+
+size_t local_size(int rank, data_layout& layout) {
+    matrix_grid mat_grid(layout.matrix_dimension, layout.block_dimension);
+    rank_grid_coord rank_coord = rank_to_grid(rank, layout.rank_grid, layout.rank_grid_ordering);
+    local_blocks loc_blocks = get_local_blocks(mat_grid, layout.rank_grid, rank_coord);
+
+    return loc_blocks.size_with_padding();
+}
 }}

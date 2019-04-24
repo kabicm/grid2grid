@@ -144,35 +144,36 @@ elem_grid_coord global_coordinates(matrix_grid mat_grid, rank_decomposition rank
 local_blocks get_local_blocks(matrix_grid mat_grid, rank_decomposition r_grid,
         rank_grid_coord rank_coord);
 
-template <typename Function>
-auto initialize_locally(Function f, int rank, data_layout& layout) {
-    using elem_type = decltype(f(0, 0));
+size_t local_size(int rank, data_layout& layout);
+
+template <typename T, typename Function>
+void initialize_locally(T* buffer, Function f, int rank, data_layout& layout) {
+    // using elem_type = decltype(f(0, 0));
+    using elem_type = T;
 
     matrix_grid mat_grid(layout.matrix_dimension, layout.block_dimension);
     rank_grid_coord rank_coord = rank_to_grid(rank, layout.rank_grid, layout.rank_grid_ordering);
     local_blocks loc_blocks = get_local_blocks(mat_grid, layout.rank_grid, rank_coord);
+    size_t buffer_size = loc_blocks.size_with_padding();
 
-    std::vector<elem_type> buffer;
-
-    for (size_t i = 0; i < loc_blocks.size_with_padding(); ++i) {
+    for (size_t i = 0; i < buffer_size; ++i) {
         local_grid_coord local_coord = loc_blocks.get_local_coordinates(i);
         elem_grid_coord global_coord = global_coordinates(mat_grid, layout.rank_grid, local_coord);
         if (global_coord.row > -1 && global_coord.col > -1) {
-            buffer.push_back(f(global_coord.row, global_coord.col));
+            *(buffer + i) = (elem_type) f(global_coord.row, global_coord.col);
         } else {
-            buffer.push_back(elem_type());
+            *(buffer + i) = elem_type();
         }
     }
 
 #ifdef DEBUG
-    std::cout << "Initializing the buffer of size: " << buffer.size() << std::endl;
+    std::cout << "Initializing the buffer of size: " << buffer_size << std::endl;
     std::cout << "elements = ";
-    for (unsigned i = 0; i < buffer.size(); ++i) {
-        std::cout << buffer[i] << ", ";
+    for (unsigned i = 0; i < buffer_size; ++i) {
+        std::cout << *(buffer+i) << ", ";
     }
     std::cout << std::endl;
 #endif
-    return buffer;
 }
 
 template <typename Function>

@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-PROJECT(grid2grid C CXX)
+PROJECT(grid2grid)
 
-enable_language(CXX)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 
 set(WITH_OPENMP ON CACHE BOOL "Use OpenMP.")
 
@@ -16,7 +18,7 @@ endif()
 #################################
 # Compiler must support c++14
 if (CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -lstdc++")
     set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -ggdb -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 else ()

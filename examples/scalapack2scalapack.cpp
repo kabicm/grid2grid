@@ -2,13 +2,13 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
-#include <cmath>
 #include <mpi.h>
 
 // Local
 #include <transform.hpp>
 #include <cantor_mapping.hpp>
 #include <options.hpp>
+#include <string>
 
 using namespace grid2grid;
 
@@ -44,14 +44,17 @@ int main( int argc, char **argv ) {
         return 1.0 * grid2grid::cantor_pairing(i, j);
     };
 
-    auto zeros = [](int i, int j) {
-        return 0.0;
-    };
-
     scalapack::ordering ordering = scalapack::ordering::column_major;
 
     scalapack::data_layout layout1({m, n}, {bm1, bn1}, {pm, pn}, ordering);
-    auto buffer1 = initialize_locally(values, rank, layout1);
+
+    // initialize the local buffer as given by function values
+    // function 'values': maps global coordinates of the matrix to values
+    std::vector<double> buffer1(local_size(rank, layout1));
+    initialize_locally(buffer1.data(), values, rank, layout1);
+
+    // check if the values of buffer1 correspond to values
+    // given by argument function 'values'
     bool ok = validate(values, buffer1, rank, layout1);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -59,11 +62,19 @@ int main( int argc, char **argv ) {
     grid_layout<double> scalapack_layout_1 = get_scalapack_grid(layout1, buffer1.data(), rank);
 
     scalapack::data_layout layout2({m, n}, {bm2, bn2}, {pm, pn}, ordering);
-    auto buffer2 = initialize_locally(zeros, rank, layout2);
+
+    // initialize the local buffer as given by function values
+    // function 'values': maps global coordinates of the matrix to values
+    std::vector<double> buffer2(local_size(rank, layout2));
+    initialize_locally(buffer2.data(), values, rank, layout2);
+
     grid_layout<double> scalapack_layout_2 = get_scalapack_grid(layout2, buffer2.data(), rank);
 
+    // transform between two grid-like layouts
     transform(scalapack_layout_1, scalapack_layout_2, MPI_COMM_WORLD);
 
+    // check if the values of buffer1 correspond to values
+    // given by argument function 'values'
     ok = ok && validate(values, buffer2, rank, layout2);
 
     std::cout << "Rank " << rank << ": result is" << (ok ? "" : " not") << " correct!" << std::endl;;
