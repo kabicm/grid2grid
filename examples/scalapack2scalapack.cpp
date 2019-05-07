@@ -22,7 +22,7 @@ int main( int argc, char **argv ) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     auto m = options::next_int("-m", "--rows", "number of rows.", 10);
-    auto n = options::next_int("-n", "--cols", "number of rows.", 12);
+    auto n = options::next_int("-n", "--cols", "number of columns.", 12);
 
     auto bm1 = options::next_int("-ibm", "--init_block_rows", "Initial block size for rows.", 2);
     auto bn1 = options::next_int("-ibn", "--init_block_cols", "Initial block size for columns.", 2);
