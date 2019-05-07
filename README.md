@@ -68,7 +68,7 @@ The pipeline of the algorithm is roughly the following:
 Assuming that you want to use the `gcc 8` compiler and `OpenMP`, you can build the project as follows:
 ```bash
 # clone the repo
-git clone https://github.com/kabicm/grid2grid
+git clone --recursive https://github.com/kabicm/grid2grid
 cd grid2grid
 mkdir build
 cd build

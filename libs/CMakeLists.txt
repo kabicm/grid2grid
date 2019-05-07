@@ -1,5 +1,3 @@
-##############################
-#    Command-line options    #
-##############################
-set(sources options.cpp)
-add_library(options SHARED ${sources})
+if (NOT TARGET options)
+    add_subdirectory(options)
+endif()
