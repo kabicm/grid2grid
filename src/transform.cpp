@@ -23,7 +23,7 @@ std::vector<message<T>> decompose_block(const block<T>& b, grid_cover& g_cover, 
         for (int j = col_first; j < col_last; ++j) {
             // use i, j to find out the rank
             int rank = g.owner(i, j);
-            // std::cout << "owner of block " << i << ", " << j << " is " << rank << std::endl;
+            std::cout << "owner of block " << i << ", " << j << " is " << rank << std::endl;
 
             // use i+1 and j+1 to find out the block
             int col_end = std::min(g.grid().cols_split[j+1], b.cols_interval.end);
@@ -34,8 +34,8 @@ std::vector<message<T>> decompose_block(const block<T>& b, grid_cover& g_cover, 
             assert(subblock.non_empty());
             // if non empty, add this block
             if (subblock.non_empty()) {
-                // std::cout << "for rank " << rank << ", adding subblock: " << subblock << std::endl;
-                // std::cout << "owner of " << subblock << " is " << rank << std::endl;
+                std::cout << "for rank " << rank << ", adding subblock: " << subblock << std::endl;
+                std::cout << "owner of " << subblock << " is " << rank << std::endl;
                 decomposed_blocks.push_back({subblock, rank});
             }
 
@@ -58,7 +58,7 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T>& init_layout, cons
     std::vector<message<T>> messages;
 
     for (int i = 0; i < init_layout.blocks.num_blocks(); ++i) {
-        // std::cout << "decomposing block " << i << " out of " << blocks.num_blocks() << std::endl;
+        std::cout << "decomposing block " << i << " out of " << init_layout.blocks.num_blocks() << std::endl;
         std::vector<message<T>> decomposed = decompose_block(init_layout.blocks.get_block(i), g_overlap, final_layout.grid);
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
@@ -78,38 +78,77 @@ communication_data<T> prepare_to_recv(const grid_layout<T>& final_layout, const 
     return communication_data<T>(std::move(messages), init_layout.num_ranks());
 }
 
+std::vector<int> line_split(scalapack::elem_grid_coord initial_coord, 
+                            scalapack::elem_grid_coord final_coord, 
+                            scalapack::block_dim b_dim,
+                            int index) { // index == 0 => rows, index == 1 => cols
+    std::vector<int> splits;
+    auto m_dim_offset = final_coord - initial_coord;
+    scalapack::elem_grid_coord ij_next = initial_coord;
+
+    while (ij_next[index] <= final_coord[index]) {
+        ij_next[index] = (ij_next[index] / b_dim[index]) * b_dim[index];
+        auto ij_next_offset = ij_next[index] - initial_coord[index];
+        splits.push_back(std::min(ij_next_offset, m_dim_offset[index]));
+
+        ij_next[index] += b_dim[index];
+    }
+
+    if (splits.back() != m_dim_offset[index]) {
+        splits.push_back(m_dim_offset[index]);
+    }
+    return splits;
+}
+
 template<typename T>
-grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
-                               scalapack::block_dim b_dim,
+grid_layout<T> get_scalapack_grid(scalapack::matrix_dim lld_m_dim, // local leading dim
+                               scalapack::matrix_dim m_dim, // global matrix size
+                               scalapack::elem_grid_coord ij, // start of submatrix
+                               scalapack::matrix_dim subm_dim, // dim of submatrix
+                               scalapack::block_dim b_dim, // block dimension
                                scalapack::rank_decomposition r_grid,
                                scalapack::ordering rank_grid_ordering,
+                               bool transposed,
+                               scalapack::rank_grid_coord rank_src,
                                T* ptr, int rank) {
-    // std::cout << "I AM RANK " << rank << std::endl;
-    int n_blocks_row = (int) std::ceil(1.0 * m_dim.n_rows / b_dim.n_rows);
-    int n_blocks_col = (int) std::ceil(1.0 * m_dim.n_cols / b_dim.n_cols);
+    if (transposed) {
+        lld_m_dim.transpose();
+        m_dim.transpose();
+        ij.transpose();
+    }
+
+    // local information, thus not used for the global grid
+    int lld = lld_m_dim.row;
 
     // **************************
     // create grid2D
     // **************************
     // prepare row intervals
-    std::vector<int> rows_split;
-    rows_split.reserve(n_blocks_row);
-    rows_split.push_back(0);
+    // and col intervals
+    scalapack::elem_grid_coord one{1, 1};
+    ij = ij - one;
+    scalapack::elem_grid_coord ij_init = ij;
 
-    for (int i = 0; i < m_dim.n_rows; i += b_dim.n_rows) {
-        rows_split.push_back(std::min(i + b_dim.n_rows, m_dim.n_rows));
+    scalapack::elem_grid_coord submatrix_end = (scalapack::elem_grid_coord)(ij_init + subm_dim);
+
+    std::vector<int> rows_split = line_split(ij_init, submatrix_end, b_dim, 0);
+    std::vector<int> cols_split = line_split(ij_init, submatrix_end, b_dim, 1);
+
+#ifdef DEBUG
+    std::cout << "rows_split = " << std::endl;
+    for (const auto& el : rows_split) {
+        std::cout << el << ", " << std::endl;
     }
-
-    // prepare col intervals
-    std::vector<int> cols_split;
-    cols_split.reserve(n_blocks_col);
-    cols_split.push_back(0);
-
-    for (int i = 0; i < m_dim.n_cols; i += b_dim.n_cols) {
-        cols_split.push_back(std::min(i + b_dim.n_cols, m_dim.n_cols));
+    std::cout << "cols_split = " << std::endl;
+    for (const auto& el : cols_split) {
+        std::cout << el << ", " << std::endl;
     }
+#endif
 
-    grid2D grid(m_dim.n_rows, m_dim.n_cols, std::move(rows_split), std::move(cols_split));
+    int n_blocks_row = rows_split.size() - 1;
+    int n_blocks_col = cols_split.size() - 1;
+
+    grid2D grid(std::move(rows_split), std::move(cols_split));
 
     // **************************
     // create an assigned grid2D
@@ -117,38 +156,71 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
     // create a matrix of ranks owning each block
     std::vector<std::vector<int>> owners(n_blocks_row, std::vector<int>(n_blocks_col));
     for (int i = 0; i < n_blocks_row; ++i) {
-        int rank_row = i % r_grid.n_rows;
+        int rank_row = i % r_grid.row;
         for (int j = 0; j < n_blocks_col; ++j) {
-            int rank_col = j % r_grid.n_cols;
-            owners[i][j] = rank_from_grid({rank_row, rank_col}, r_grid, rank_grid_ordering);
+            int rank_col = j % r_grid.col;
+            owners[i][j] = rank_from_grid({rank_row, rank_col}, r_grid, 
+                    rank_grid_ordering, rank_src);
         }
     }
 
     // create an assigned grid2D
-    assigned_grid2D assigned_grid (std::move(grid), std::move(owners), r_grid.n_total);
+    assigned_grid2D assigned_grid (std::move(grid), std::move(owners), r_grid.n_total());
 
     // **************************
     // create local memory view
     // **************************
     // get coordinates of current rank in a rank decomposition
-    scalapack::rank_grid_coord rank_coord = rank_to_grid(rank, r_grid, rank_grid_ordering);
+    scalapack::rank_grid_coord rank_coord = rank_to_grid(rank, r_grid,
+            rank_grid_ordering, rank_src);
 
     std::vector<block<T>> loc_blocks;
 
-    int n_owning_blocks_row = n_blocks_row / r_grid.n_rows
-                              + (rank_coord.row < n_blocks_row % r_grid.n_rows ? 1 : 0);
+    int stride = lld;
 
-    // int n_owning_blocks_col = n_blocks_col / r_grid.n_cols
-                              // + (rank_coord.col < n_blocks_col % r_grid.n_cols ? 1 : 0);
+    block_range submatrix({ij_init.row, submatrix_end.row}, {ij_init.col, submatrix_end.col});
 
-    int stride = n_owning_blocks_row * b_dim.n_rows;
+    auto bij_init = ij / b_dim;
+    auto remainder = bij_init % r_grid;
+    bij_init = bij_init / r_grid;
+
+    if (rank_coord[0] < remainder[0]) {
+        bij_init[0]++;
+    }
+    if (rank_coord[1] < remainder[1]) {
+        bij_init[1]++;
+    }
 
     // iterate through all the blocks that this rank owns
-    for (int bj = rank_coord.col; bj < n_blocks_col; bj += r_grid.n_cols) {
-        // interval col_interval = assigned_grid.cols_interval(bj);
-        for (int bi = rank_coord.row; bi < n_blocks_row; bi += r_grid.n_rows) {
-            // interval row_interval = assigned_grid.rows_interval(bi);
-            auto data = ptr + (bj / r_grid.n_cols) * stride * b_dim.n_cols + (bi / r_grid.n_rows) * b_dim.n_rows;
+    for (int bj = rank_coord.col; bj < n_blocks_col; bj += r_grid.col) {
+        interval col_interval = assigned_grid.cols_interval(bj);
+
+        for (int bi = rank_coord.row; bi < n_blocks_row; bi += r_grid.row) {
+            interval row_interval = assigned_grid.rows_interval(bi);
+
+            block_range current_block(row_interval, col_interval);
+            std::cout << "current_block = " << current_block << std::endl;
+            std::cout << "submatrix = " << submatrix << std::endl;
+
+            if (current_block.outside_of(submatrix))
+                continue;
+
+            int offset = 0;
+
+            auto intersection = current_block.intersection(submatrix);
+            std::cout << "intersection = " << intersection << std::endl;
+            if (intersection != current_block) {
+                int row_within_block = std::abs(submatrix.rows_interval.start - row_interval.start);
+                int col_within_block = std::abs(submatrix.cols_interval.start - col_interval.start);
+                std::cout << "col_within_block = " << col_within_block << ", row_within_block = " << row_within_block << std::endl;
+                offset = lld * col_within_block + row_within_block;
+            }
+
+            std::cout << "lld = " << lld << std::endl;
+            std::cout << "stride = " << stride << std::endl;
+            std::cout << "small offset(should be 0) = " << offset << std::endl;
+            auto data = ptr + offset + (bj / r_grid.col) * stride * b_dim.col + (bi / r_grid.row) * b_dim.row;
+            std::cout << "offset = " << data - ptr << std::endl;
             assert(data != nullptr);
             // if (data == nullptr) {
             //     std::cout << "Data = nullptr for bi = " << bi << " and bj = " << bj << std::endl;
@@ -156,7 +228,20 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
             // std::cout << "scalapack" << std::endl;
             // std::cout << "row_interval = " << row_interval << ", col_interval " << col_interval << std::endl;
             // std::cout << "ptr offset = " << (data - ptr) << std::endl;
-            loc_blocks.push_back({assigned_grid, {bi, bj}, data, stride});
+            int bi_shifted = bi - bij_init[0];
+            int bj_shifted = bj - bij_init[1];
+
+            block<T> blk;
+
+            if (offset == 0) {
+                blk = block<T>{assigned_grid, {bi_shifted, bj_shifted}, data, stride};
+            } else {
+                block_range b(row_interval, col_interval);
+                block_range b_overlap = b.intersection(submatrix);
+                assert(b_overlap.non_empty());
+                blk = block<T>{b_overlap, {bi_shifted, bj_shifted}, data, stride};
+            }
+            loc_blocks.push_back(blk);
         }
     }
 
@@ -167,6 +252,37 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
     // create a grid layout
     // **************************
     return {std::move(assigned_grid), std::move(local_memory)};
+}
+
+template<typename T>
+grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
+                               scalapack::block_dim b_dim,
+                               scalapack::rank_decomposition r_grid,
+                               scalapack::ordering rank_grid_ordering,
+                               T* ptr, int rank) {
+    // std::cout << "I AM RANK " << rank << std::endl;
+    int n_blocks_row = (int) std::ceil(1.0 * m_dim.row / b_dim.row);
+    int n_blocks_col = (int) std::ceil(1.0 * m_dim.col / b_dim.col);
+
+    scalapack::rank_grid_coord rank_coord = rank_to_grid(rank, r_grid, rank_grid_ordering);
+
+    int n_owning_blocks_row = n_blocks_row / r_grid.row
+                              + (rank_coord.row < (n_blocks_row % r_grid.row) ? 1 : 0);
+
+    int stride = n_owning_blocks_row * b_dim.row;
+
+    bool transposed = false;
+
+    return get_scalapack_grid({stride, 0}, // local leading dim
+           m_dim, // global matrix size
+           {1, 1}, // start of submatrix
+           m_dim, // dim of submatrix
+           b_dim, // block dimension
+           r_grid,
+           rank_grid_ordering,
+           transposed,
+           {0, 0},
+           ptr, rank);
 }
 
 template<typename T>

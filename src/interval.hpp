@@ -21,6 +21,9 @@ struct interval {
     bool contains(interval other) const;
 
     bool non_empty() const;
+    bool empty() const;
+
+    interval intersection(const interval& other) const;
 
     /*
         finds intervals from v that overlap with [start, end),
@@ -31,6 +34,9 @@ struct interval {
           * end_index = min i such that v[i] >= end
      */
     std::pair<int, int> overlapping_intervals(const std::vector<int> &v) const;
+
+    bool operator==(const interval& other) const;
+    bool operator!=(const interval& other) const;
 };
 
 std::ostream &operator<<(std::ostream &os, const interval &other);

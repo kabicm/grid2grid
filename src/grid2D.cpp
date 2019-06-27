@@ -10,8 +10,8 @@ namespace grid2grid {
         - 0 <= rows_split[i] < n_rows
         - 0 <= cols_split[i] < n_cols
 */
-grid2D::grid2D(int rows, int cols, std::vector<int> &&r_split, std::vector<int> &&c_split) :
-        n_rows(rows), n_cols(cols),
+grid2D::grid2D(std::vector<int> &&r_split, std::vector<int> &&c_split) :
+        n_rows(r_split.size()-1), n_cols(c_split.size()-1),
         rows_split(std::forward < std::vector < int >> (r_split)),
         cols_split(std::forward < std::vector < int >> (c_split)) {}
 

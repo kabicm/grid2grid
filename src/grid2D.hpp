@@ -23,7 +23,7 @@ struct grid2D {
     std::vector<int> cols_split;
 
     grid2D() = default;
-    grid2D(int rows, int cols, std::vector<int> &&r_split, std::vector<int> &&c_split);
+    grid2D(std::vector<int> &&r_split, std::vector<int> &&c_split);
 
     // returns index-th row interval, i.e. [rows_split[index], rows_split[index + 1])
     interval row_interval(int index) const;

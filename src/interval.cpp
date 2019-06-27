@@ -19,7 +19,29 @@ bool interval::contains(interval other) const {
 }
 
 bool interval::non_empty() const {
-    return end > start;
+    return end >= start;
+}
+
+bool interval::empty() const {
+    return !non_empty();
+}
+
+interval interval::intersection(const interval& other) const {
+    if (!non_empty() || !other.non_empty()
+        || start >= other.end || end <= other.start) {
+        return {};
+    }
+    return {std::max(start, other.start), std::min(end, other.end)};
+}
+
+bool interval::operator==(const interval& other) const {
+    if (empty()) 
+        return other.empty();
+    return start == other.start && end == other.end;
+}
+
+bool interval::operator!=(const interval& other) const {
+    return !(*this==other);
 }
 
 /*

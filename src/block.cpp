@@ -23,6 +23,19 @@ block<T>::block(interval r_inter, interval c_inter, block_coordinates coord, T *
     block(r_inter, c_inter, coord, ptr, r_inter.length()) {}
 
 template <typename T>
+block<T>::block(block_range& range, block_coordinates coord, T *ptr, int stride) :
+    block(range.rows_interval, range.cols_interval, coord, ptr, stride) {}
+
+template <typename T>
+block<T>::block(block_range& range, block_coordinates coord, T *ptr) :
+    block(range.rows_interval, range.cols_interval, coord, ptr) {}
+
+std::ostream& operator<<(std::ostream &os, const block_range &other) {
+    os << "rows:" << other.rows_interval << ", cols:" << other.cols_interval << std::endl;
+    return os;
+}
+
+template <typename T>
 block<T> block<T>::subblock(interval r_range, interval c_range) const {
     if (!rows_interval.contains(r_range) || !cols_interval.contains(c_range)) {
         std::cout << "BLOCK: row_interval = " << rows_interval << ", column_interval = " << cols_interval
