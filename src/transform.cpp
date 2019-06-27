@@ -23,7 +23,7 @@ std::vector<message<T>> decompose_block(const block<T>& b, grid_cover& g_cover, 
         for (int j = col_first; j < col_last; ++j) {
             // use i, j to find out the rank
             int rank = g.owner(i, j);
-            std::cout << "owner of block " << i << ", " << j << " is " << rank << std::endl;
+            // std::cout << "owner of block " << i << ", " << j << " is " << rank << std::endl;
 
             // use i+1 and j+1 to find out the block
             int col_end = std::min(g.grid().cols_split[j+1], b.cols_interval.end);
@@ -34,8 +34,8 @@ std::vector<message<T>> decompose_block(const block<T>& b, grid_cover& g_cover, 
             assert(subblock.non_empty());
             // if non empty, add this block
             if (subblock.non_empty()) {
-                std::cout << "for rank " << rank << ", adding subblock: " << subblock << std::endl;
-                std::cout << "owner of " << subblock << " is " << rank << std::endl;
+                // std::cout << "for rank " << rank << ", adding subblock: " << subblock << std::endl;
+                // std::cout << "owner of " << subblock << " is " << rank << std::endl;
                 decomposed_blocks.push_back({subblock, rank});
             }
 
@@ -58,7 +58,7 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T>& init_layout, cons
     std::vector<message<T>> messages;
 
     for (int i = 0; i < init_layout.blocks.num_blocks(); ++i) {
-        std::cout << "decomposing block " << i << " out of " << init_layout.blocks.num_blocks() << std::endl;
+        // std::cout << "decomposing block " << i << " out of " << init_layout.blocks.num_blocks() << std::endl;
         std::vector<message<T>> decomposed = decompose_block(init_layout.blocks.get_block(i), g_overlap, final_layout.grid);
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
@@ -199,28 +199,19 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim lld_m_dim, // local lead
             interval row_interval = assigned_grid.rows_interval(bi);
 
             block_range current_block(row_interval, col_interval);
-            std::cout << "current_block = " << current_block << std::endl;
-            std::cout << "submatrix = " << submatrix << std::endl;
-
             if (current_block.outside_of(submatrix))
                 continue;
 
             int offset = 0;
 
             auto intersection = current_block.intersection(submatrix);
-            std::cout << "intersection = " << intersection << std::endl;
             if (intersection != current_block) {
                 int row_within_block = std::abs(submatrix.rows_interval.start - row_interval.start);
                 int col_within_block = std::abs(submatrix.cols_interval.start - col_interval.start);
-                std::cout << "col_within_block = " << col_within_block << ", row_within_block = " << row_within_block << std::endl;
                 offset = lld * col_within_block + row_within_block;
             }
 
-            std::cout << "lld = " << lld << std::endl;
-            std::cout << "stride = " << stride << std::endl;
-            std::cout << "small offset(should be 0) = " << offset << std::endl;
             auto data = ptr + offset + (bj / r_grid.col) * stride * b_dim.col + (bi / r_grid.row) * b_dim.row;
-            std::cout << "offset = " << data - ptr << std::endl;
             assert(data != nullptr);
             // if (data == nullptr) {
             //     std::cout << "Data = nullptr for bi = " << bi << " and bj = " << bj << std::endl;
