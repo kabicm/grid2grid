@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.5)
-PROJECT(grid2grid)
+
+if(NOT DEFINED PROJECT_NAME)
+  set(GRID2GRID_NOT_SUBPROJECT ON)
+endif()
+
+# Check if Grid2Grid is bundled, disable test suit if it is.
+#
+project(grid2grid)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -59,4 +66,6 @@ enable_testing()
 
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(examples)
+if (GRID2GRID_NOT_SUBPROJECT)
+  add_subdirectory(examples)
+endif()
