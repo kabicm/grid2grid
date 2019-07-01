@@ -78,6 +78,7 @@ communication_data<T> prepare_to_recv(const grid_layout<T>& final_layout, const 
     return communication_data<T>(std::move(messages), init_layout.num_ranks());
 }
 
+inline
 std::vector<int> line_split(scalapack::elem_grid_coord initial_coord, 
                             scalapack::elem_grid_coord final_coord, 
                             scalapack::block_dim b_dim,
