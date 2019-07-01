@@ -1,3 +1,5 @@
+#include "grid_cover.hpp"
+
 namespace grid2grid {
 std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue, const std::vector<int> &decomp_red) {
 #ifdef DEBUG
@@ -68,21 +70,5 @@ std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue
 std::ostream& operator<<(std::ostream& os, const interval_cover& other) {
     os << "interval_cover[" << other.start_index << ", " << other.end_index << "]";
     return os;
-}
-
-grid_cover::grid_cover(const grid2D& g1, const grid2D& g2) {
-    rows_cover = get_decomp_cover(g1.rows_split, g2.rows_split);
-    cols_cover = get_decomp_cover(g1.cols_split, g2.cols_split);
-}
-
-template <typename T>
-block_cover grid_cover::decompose_block(const block<T>& b) {
-    int row_index = b.coordinates.row;
-    int col_index = b.coordinates.col;
-    if (row_index < 0 || (size_t) row_index >= rows_cover.size() ||
-        col_index < 0 || (size_t) col_index >= cols_cover.size()) {
-        throw std::runtime_error("Error in decompose block. Block coordinates do not belong to the grid cover.");
-    }
-    return {rows_cover[row_index], cols_cover[col_index]};
 }
 }

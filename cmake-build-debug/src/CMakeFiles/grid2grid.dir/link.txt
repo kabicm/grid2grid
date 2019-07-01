@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgrid2grid.a  CMakeFiles/grid2grid.dir/grid2D.cpp.o CMakeFiles/grid2grid.dir/interval.cpp.o CMakeFiles/grid2grid.dir/scalapack_layout.cpp.o CMakeFiles/grid2grid.dir/grid_cover.cpp.o
+/usr/bin/ranlib libgrid2grid.a

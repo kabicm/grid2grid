@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="options"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\src\;CMake Files\libs\;CMake Files\libs\options\;CMake Files\libs\options\src\;CMake Files\libs\options\examples\;CMake Files\examples\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="options">
+				<Option output="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/liboptions.dylib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/kabicm/Projects/grid2grid/libs/options/src"/>
+					<Add directory="/usr/local/Cellar/open-mpi/3.1.1/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/x86_64-apple-darwin17.5.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/backward"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include-fixed"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 options"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="options/fast">
+				<Option output="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/liboptions.dylib" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src"/>
+				<Option object_output="./"/>
+				<Option type="3"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/kabicm/Projects/grid2grid/libs/options/src"/>
+					<Add directory="/usr/local/Cellar/open-mpi/3.1.1/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/x86_64-apple-darwin17.5.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/backward"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include-fixed"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 options/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="simple">
+				<Option output="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/simple" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/kabicm/Projects/grid2grid/libs/options/src"/>
+					<Add directory="/usr/local/Cellar/open-mpi/3.1.1/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/x86_64-apple-darwin17.5.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/backward"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include-fixed"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 simple"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="simple/fast">
+				<Option output="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/simple" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/Users/kabicm/Projects/grid2grid/libs/options/src"/>
+					<Add directory="/usr/local/Cellar/open-mpi/3.1.1/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/x86_64-apple-darwin17.5.0"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/../../../../../../include/c++/8.1.0/backward"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/include"/>
+					<Add directory="/usr/local/Cellar/gcc/8.1.0/lib/gcc/8/gcc/x86_64-apple-darwin17.5.0/8.1.0/include-fixed"/>
+					<Add directory="/System/Library/Frameworks"/>
+					<Add directory="/Library/Frameworks"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 simple/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/Users/kabicm/Projects/grid2grid/cmake-build-debug/libs/options/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/examples/simple.cpp">
+			<Option target="simple"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/src/options.cpp">
+			<Option target="options"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/src/options.hpp">
+			<Option target="options"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\src\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libs\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libs\options\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libs\options\src\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/libs/options/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\libs\options\examples\"/>
+		</Unit>
+		<Unit filename="/Users/kabicm/Projects/grid2grid/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\examples\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

@@ -10,7 +10,7 @@ set(sources
     interval.cpp
     scalapack_layout.cpp
     communication_data.hpp
-    grid_cover.hpp
+    grid_cover.cpp
     transform.hpp)
 
 ###################
