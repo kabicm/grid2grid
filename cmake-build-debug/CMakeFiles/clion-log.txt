@@ -1,7 +1,0 @@
-/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_CXX_COMPILER=g++-8 -G "CodeBlocks - Unix Makefiles" /Users/kabicm/Projects/grid2grid
--- Found OpenMP_C: -fopenmp  
--- Found OpenMP_CXX: -fopenmp  
--- Found OpenMP: TRUE   
--- Configuring done
--- Generating done
--- Build files have been written to: /Users/kabicm/Projects/grid2grid/cmake-build-debug

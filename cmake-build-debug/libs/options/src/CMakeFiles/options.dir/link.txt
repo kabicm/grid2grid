@@ -1,1 +1,0 @@
-/usr/local/bin/g++-8  -Wall -lstdc++ -Wall -lstdc++ -O0 -g -ggdb -DDEBUG -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -dynamiclib -Wl,-headerpad_max_install_names  -o liboptions.dylib -install_name @rpath/liboptions.dylib CMakeFiles/options.dir/options.cpp.o 
