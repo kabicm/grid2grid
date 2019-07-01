@@ -89,6 +89,13 @@ struct block {
     block(block_range& range, block_coordinates coord, T *ptr, int stride);
     block(block_range& range, block_coordinates coord, T *ptr);
 
+    // without coordinates
+    block(const assigned_grid2D& grid, interval r_inter, interval c_inter, T *ptr, int stride);
+    block(const assigned_grid2D& grid, interval r_inter, interval c_inter, T *ptr);
+
+    block(const assigned_grid2D& grid, block_range& range, T *ptr, int stride);
+    block(const assigned_grid2D& grid, block_range& range, T *ptr);
+
     block subblock(interval r_range, interval c_range) const;
 
     bool non_empty() const;

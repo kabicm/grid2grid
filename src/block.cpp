@@ -30,6 +30,40 @@ template <typename T>
 block<T>::block(block_range& range, block_coordinates coord, T *ptr) :
     block(range.rows_interval, range.cols_interval, coord, ptr) {}
 
+
+// finds the index of the interval inter in splits
+int interval_index(const std::vector<int>& splits, interval inter) {
+    auto ptr = std::upper_bound(splits.begin(), splits.end(), inter.start);
+    int index = std::distance(ptr, splits.begin());
+
+    return index;
+}
+
+// without coordinates
+template <typename T>
+block<T>::block(const assigned_grid2D& grid,
+        interval r_inter, interval c_inter, T *ptr, int stride):
+    rows_interval(r_inter), cols_interval(c_inter), data(ptr), stride(stride) {
+    // compute the coordinates based on the grid and intervals
+    int row_coord = interval_index(grid.grid().rows_split, rows_interval);
+    int col_coord = interval_index(grid.grid().cols_split, cols_interval);
+    coordinates = block_coordinates(row_coord, col_coord);
+}
+
+template <typename T>
+block<T>::block(const assigned_grid2D& grid,
+        interval r_inter, interval c_inter, T *ptr) :
+    block(grid, r_inter, c_inter, ptr, r_inter.length()) {}
+
+template <typename T>
+block<T>::block(const assigned_grid2D& grid,
+        block_range& range, T *ptr, int stride) :
+    block(grid, range.rows_interval, range.cols_interval, ptr, stride) {}
+
+template <typename T>
+block<T>::block(const assigned_grid2D& grid, block_range& range, T *ptr) :
+    block(grid, range.rows_interval, range.cols_interval, ptr) {}
+
 std::ostream& operator<<(std::ostream &os, const block_range &other) {
     os << "rows:" << other.rows_interval << ", cols:" << other.cols_interval << std::endl;
     return os;

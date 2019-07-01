@@ -282,11 +282,6 @@ grid_layout<T> get_scalapack_grid(scalapack::data_layout& layout,
     return get_scalapack_grid(layout.matrix_dimension, layout.block_dimension,
                               layout.rank_grid, layout.rank_grid_ordering, ptr, rank);
 }
-/*
-// TODO: generate grid from COSMA matrix
-grid_layout get_cosma_grid(CosmaMatrix& mat) {
-}
-*/
 
 template<typename T>
 void transform(grid_layout<T>& initial_layout, grid_layout<T>& final_layout, MPI_Comm comm) {
