@@ -12,8 +12,8 @@ namespace grid2grid {
 */
 grid2D::grid2D(std::vector<int> &&r_split, std::vector<int> &&c_split) :
         n_rows(r_split.size()-1), n_cols(c_split.size()-1),
-        rows_split(std::forward < std::vector < int >> (r_split)),
-        cols_split(std::forward < std::vector < int >> (c_split)) {}
+        rows_split(std::forward<std::vector<int>>(r_split)),
+        cols_split(std::forward<std::vector<int>>(c_split)) {}
 
 // returns index-th row interval, i.e. [rows_split[index], rows_split[index + 1])
 interval grid2D::row_interval(int index) const {

@@ -101,7 +101,7 @@ std::vector<int> line_split(scalapack::elem_grid_coord initial_coord,
 }
 
 template<typename T>
-grid_layout<T> get_scalapack_grid(scalapack::matrix_dim lld_m_dim, // local leading dim
+grid_layout<T> get_scalapack_grid(int lld, // local leading dim
                                scalapack::matrix_dim m_dim, // global matrix size
                                scalapack::elem_grid_coord ij, // start of submatrix
                                scalapack::matrix_dim subm_dim, // dim of submatrix
@@ -112,13 +112,9 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim lld_m_dim, // local lead
                                scalapack::rank_grid_coord rank_src,
                                T* ptr, int rank) {
     if (transposed) {
-        lld_m_dim.transpose();
         m_dim.transpose();
         ij.transpose();
     }
-
-    // local information, thus not used for the global grid
-    int lld = lld_m_dim.row;
 
     // **************************
     // create grid2D
@@ -264,7 +260,7 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
 
     bool transposed = false;
 
-    return get_scalapack_grid({stride, 0}, // local leading dim
+    return get_scalapack_grid(stride, // local leading dim
            m_dim, // global matrix size
            {1, 1}, // start of submatrix
            m_dim, // dim of submatrix

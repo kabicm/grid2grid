@@ -23,7 +23,7 @@ template <typename T>
 grid_layout<T> get_scalapack_grid(scalapack::data_layout& layout,
                                T *ptr, int rank);
 template<typename T>
-grid_layout<T> get_scalapack_grid(scalapack::matrix_dim lld_m_dim, // local leading dim
+grid_layout<T> get_scalapack_grid(int lld_m_dim, // local leading dim
                                scalapack::matrix_dim m_dim, // global matrix size
                                scalapack::elem_grid_coord ij, // start of submatrix
                                scalapack::matrix_dim subm_dim, // dim of submatrix
