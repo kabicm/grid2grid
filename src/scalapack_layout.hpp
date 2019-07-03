@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
+#include <initializer_list>
 
 namespace grid2grid {
 namespace scalapack {
@@ -17,7 +18,8 @@ struct int_pair {
     int col = 0;
 
     int_pair() = default;
-    int_pair(int r, int c): row(r), col(c) {};
+    int_pair(int r, int c): row(r), col(c) {}
+    int_pair(std::initializer_list<int> l): row(*l.begin()), col(*l.end()) {}
 
     int_pair operator+(const int_pair& other) const {
         int_pair sum(row, col);

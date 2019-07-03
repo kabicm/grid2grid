@@ -111,7 +111,7 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
                                scalapack::ordering rank_grid_ordering,
                                bool transposed,
                                scalapack::rank_grid_coord rank_src,
-                               T* ptr, int rank) {
+                               T* ptr, const int rank) {
     if (transposed) {
         m_dim.transpose();
         ij.transpose();
@@ -156,7 +156,7 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
         int rank_row = i % r_grid.row;
         for (int j = 0; j < n_blocks_col; ++j) {
             int rank_col = j % r_grid.col;
-            owners[i][j] = rank_from_grid({rank_row, rank_col}, r_grid, 
+            owners[i][j] = rank_from_grid({rank_row, rank_col}, r_grid,
                     rank_grid_ordering, rank_src);
         }
     }
@@ -276,7 +276,7 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
 template<typename T>
 grid_layout<T> get_scalapack_grid(scalapack::data_layout& layout,
                                T* ptr, int rank) {
-    return get_scalapack_grid(layout.matrix_dimension, layout.block_dimension,
+    return get_scalapack_grid<T>(layout.matrix_dimension, layout.block_dimension,
                               layout.rank_grid, layout.rank_grid_ordering, ptr, rank);
 }
 
