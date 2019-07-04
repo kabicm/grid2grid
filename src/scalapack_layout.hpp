@@ -21,7 +21,8 @@ struct int_pair {
     int_pair(int r, int c): row(r), col(c) {}
     int_pair(std::initializer_list<int> l) {
         assert(l.size() == 2);
-        row(*l.begin()), col(*(l.begin()+1));
+        row = *l.begin();
+        col = *(l.begin()+1);
     }
 
     int_pair operator+(const int_pair& other) const {
