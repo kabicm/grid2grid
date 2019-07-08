@@ -49,7 +49,7 @@ struct block_range {
     }
 
     bool empty() const {
-        return !non_empty();
+        return rows_interval.empty() || cols_interval.empty();
     }
 
     bool operator==(const block_range& other) const {
@@ -107,9 +107,9 @@ struct block {
 
     // finds the index of the interval inter in splits
     int interval_index(const std::vector<int>& splits, interval inter) {
-        auto ptr = std::upper_bound(splits.begin(), splits.end(), inter.start);
-        int index = std::distance(ptr, splits.begin());
-
+        auto ptr = std::lower_bound(splits.begin(), splits.end(), inter.start);
+        int index = std::distance(splits.begin(), ptr);
+        std::cout << "block.hpp file, interval_index function, returns index = " << index << std::endl;
         return index;
     }
 

@@ -59,7 +59,9 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T>& init_layout, cons
 
     for (int i = 0; i < init_layout.blocks.num_blocks(); ++i) {
         // std::cout << "decomposing block " << i << " out of " << init_layout.blocks.num_blocks() << std::endl;
-        std::vector<message<T>> decomposed = decompose_block(init_layout.blocks.get_block(i), g_overlap, final_layout.grid);
+        auto blk = init_layout.blocks.get_block(i);
+        assert(blk.non_empty());
+        std::vector<message<T>> decomposed = decompose_block(blk, g_overlap, final_layout.grid);
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
     merge_messages(messages);
@@ -229,6 +231,7 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
                 assert(b_overlap.non_empty());
                 blk = block<T>{b_overlap, {bi_shifted, bj_shifted}, data, stride};
             }
+            assert(blk.non_empty());
             loc_blocks.push_back(blk);
         }
     }

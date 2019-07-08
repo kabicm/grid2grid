@@ -43,7 +43,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &&msgs, int n_
         offset_per_message[i] = offset;
         offset += b.total_size();
         // copy_block_to_buffer(b, buffer.begin() + offset);
-
+        assert(b.non_empty());
         counts[rank] += b.total_size();
         total_size += b.total_size();
 

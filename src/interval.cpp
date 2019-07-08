@@ -6,11 +6,10 @@ interval::interval(int start, int end) : start(start), end(end) {
     if (start > end) {
         throw std::runtime_error("ERROR: in class interval, start<=end must be satisfied.");
     }
-    len = end - start;
 }
 
 int interval::length() const {
-    return len;
+    return end-start;
 }
 
 // an interval contains
@@ -19,11 +18,11 @@ bool interval::contains(interval other) const {
 }
 
 bool interval::non_empty() const {
-    return end >= start;
+    return end > start;
 }
 
 bool interval::empty() const {
-    return !non_empty();
+    return end == start;
 }
 
 interval interval::intersection(const interval& other) const {

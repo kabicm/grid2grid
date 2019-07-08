@@ -3,13 +3,13 @@
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <cassert>
 
 // A class describing the interval [start, end)
 namespace grid2grid {
 struct interval {
     int start = 0;
     int end = 0;
-    int len = 0;
 
     interval() = default;
 
