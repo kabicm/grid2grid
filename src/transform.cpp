@@ -246,6 +246,21 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
 }
 
 template<typename T>
+grid_layout<T> get_scalapack_grid(int lld, // local leading dim
+                               scalapack::matrix_dim m_dim, // global matrix size
+                               scalapack::elem_grid_coord ij, // start of submatrix
+                               scalapack::matrix_dim subm_dim, // dim of submatrix
+                               scalapack::block_dim b_dim, // block dimension
+                               scalapack::rank_decomposition r_grid,
+                               scalapack::ordering rank_grid_ordering,
+                               bool transposed,
+                               scalapack::rank_grid_coord rank_src,
+                               const T* ptr, const int rank) {
+    return get_scalapack_grid(lld, m_dim, ij, subm_dim, b_dim,
+            r_grid, rank_grid_ordering, transposed, ranks_src, const_cast<T*>(ptr), rank);
+}
+
+template<typename T>
 grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
                                scalapack::block_dim b_dim,
                                scalapack::rank_decomposition r_grid,
