@@ -308,11 +308,8 @@ void transform(grid_layout<T>& initial_layout, grid_layout<T>& final_layout, MPI
     communication_data<T> recv_data = prepare_to_recv(final_layout, initial_layout);
     // auto end = std::chrono::steady_clock::now();
     // auto prepare_recv = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
     int rank;
     MPI_Comm_rank(comm, &rank);
-    int n_ranks;
-    MPI_Comm_rank(comm, &n_ranks);
 
     // copy blocks to temporary send buffers
     // start = std::chrono::steady_clock::now();
