@@ -109,7 +109,6 @@ struct block {
     int interval_index(const std::vector<int>& splits, interval inter) {
         auto ptr = std::lower_bound(splits.begin(), splits.end(), inter.start);
         int index = std::distance(splits.begin(), ptr);
-        std::cout << "block.hpp file, interval_index function, returns index = " << index << std::endl;
         return index;
     }
 
