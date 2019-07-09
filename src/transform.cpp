@@ -257,7 +257,7 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
                                scalapack::rank_grid_coord rank_src,
                                const T* ptr, const int rank) {
     return get_scalapack_grid(lld, m_dim, ij, subm_dim, b_dim,
-            r_grid, rank_grid_ordering, transposed, ranks_src, const_cast<T*>(ptr), rank);
+            r_grid, rank_grid_ordering, transposed, rank_src, const_cast<T*>(ptr), rank);
 }
 
 template<typename T>
