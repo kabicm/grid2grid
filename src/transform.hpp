@@ -51,10 +51,20 @@ get_scalapack_grid(int lld_m_dim,                  // local leading dim
                    const int rank);
 
 template <typename T>
+grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
+                                  scalapack::block_dim b_dim,
+                                  scalapack::rank_decomposition r_grid,
+                                  scalapack::ordering rank_grid_ordering,
+                                  T *ptr,
+                                  int rank);
+
+template <typename T>
+grid_layout<T>
+get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank);
+
+template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm);
 
 } // namespace grid2grid
-
-#include "transform.cpp"

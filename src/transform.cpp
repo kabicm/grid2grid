@@ -1,4 +1,9 @@
+#include <transform.hpp>
+
+#include <complex>
+
 namespace grid2grid {
+
 template <typename T>
 std::vector<message<T>> decompose_block(const block<T> &b,
                                         grid_cover &g_cover,
@@ -431,4 +436,175 @@ void transform(grid_layout<T> &initial_layout,
     //     total_duration << std::endl;
     // }
 }
+
+template void transform<float>(grid_layout<float> &initial_layout,
+                               grid_layout<float> &final_layout,
+                               MPI_Comm comm);
+
+template void transform<double>(grid_layout<double> &initial_layout,
+                                grid_layout<double> &final_layout,
+                                MPI_Comm comm);
+
+template void
+transform<std::complex<float>>(grid_layout<std::complex<float>> &initial_layout,
+                               grid_layout<std::complex<float>> &final_layout,
+                               MPI_Comm comm);
+
+template void transform<std::complex<double>>(
+    grid_layout<std::complex<double>> &initial_layout,
+    grid_layout<std::complex<double>> &final_layout,
+    MPI_Comm comm);
+
+template grid_layout<float>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   float *ptr,
+                   const int rank);
+
+template grid_layout<double>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   double *ptr,
+                   const int rank);
+
+template grid_layout<std::complex<float>>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   std::complex<float> *ptr,
+                   const int rank);
+
+template grid_layout<std::complex<double>>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   std::complex<double> *ptr,
+                   const int rank);
+
+template grid_layout<float>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   const float *ptr,
+                   const int rank);
+
+template grid_layout<double>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   const double *ptr,
+                   const int rank);
+
+template grid_layout<std::complex<float>>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   const std::complex<float> *ptr,
+                   const int rank);
+
+template grid_layout<std::complex<double>>
+get_scalapack_grid(int lld,
+                   scalapack::matrix_dim m_dim,
+                   scalapack::elem_grid_coord ij,
+                   scalapack::matrix_dim subm_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   bool transposed,
+                   scalapack::rank_grid_coord rank_src,
+                   const std::complex<double> *ptr,
+                   const int rank);
+
+template grid_layout<float>
+get_scalapack_grid(scalapack::matrix_dim m_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   float *ptr,
+                   int rank);
+
+template grid_layout<double>
+get_scalapack_grid(scalapack::matrix_dim m_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   double *ptr,
+                   int rank);
+
+template grid_layout<std::complex<float>>
+get_scalapack_grid(scalapack::matrix_dim m_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   std::complex<float> *ptr,
+                   int rank);
+
+template grid_layout<std::complex<double>>
+get_scalapack_grid(scalapack::matrix_dim m_dim,
+                   scalapack::block_dim b_dim,
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   std::complex<double> *ptr,
+                   int rank);
+
+template grid_layout<float>
+get_scalapack_grid(scalapack::data_layout &layout, float *ptr, int rank);
+
+template grid_layout<double>
+get_scalapack_grid(scalapack::data_layout &layout, double *ptr, int rank);
+
+template grid_layout<std::complex<float>>
+get_scalapack_grid(scalapack::data_layout &layout,
+                   std::complex<float> *ptr,
+                   int rank);
+
+template grid_layout<std::complex<double>>
+get_scalapack_grid(scalapack::data_layout &layout,
+                   std::complex<double> *ptr,
+                   int rank);
+
 } // namespace grid2grid
