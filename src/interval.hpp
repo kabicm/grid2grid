@@ -1,9 +1,9 @@
 #pragma once
-#include <tuple>
-#include <iostream>
-#include <vector>
-#include <stdexcept>
 #include <cassert>
+#include <iostream>
+#include <stdexcept>
+#include <tuple>
+#include <vector>
 
 // A class describing the interval [start, end)
 namespace grid2grid {
@@ -23,7 +23,7 @@ struct interval {
     bool non_empty() const;
     bool empty() const;
 
-    interval intersection(const interval& other) const;
+    interval intersection(const interval &other) const;
 
     /*
         finds intervals from v that overlap with [start, end),
@@ -35,10 +35,9 @@ struct interval {
      */
     std::pair<int, int> overlapping_intervals(const std::vector<int> &v) const;
 
-    bool operator==(const interval& other) const;
-    bool operator!=(const interval& other) const;
+    bool operator==(const interval &other) const;
+    bool operator!=(const interval &other) const;
 };
 
 std::ostream &operator<<(std::ostream &os, const interval &other);
-}
-
+} // namespace grid2grid

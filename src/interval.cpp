@@ -2,45 +2,42 @@
 
 namespace grid2grid {
 // A class describing the interval [start, end)
-interval::interval(int start, int end) : start(start), end(end) {
+interval::interval(int start, int end)
+    : start(start)
+    , end(end) {
     if (start > end) {
-        throw std::runtime_error("ERROR: in class interval, start<=end must be satisfied.");
+        throw std::runtime_error(
+            "ERROR: in class interval, start<=end must be satisfied.");
     }
 }
 
-int interval::length() const {
-    return end-start;
-}
+int interval::length() const { return end - start; }
 
 // an interval contains
 bool interval::contains(interval other) const {
     return start <= other.start && end >= other.end;
 }
 
-bool interval::non_empty() const {
-    return end > start;
-}
+bool interval::non_empty() const { return end > start; }
 
-bool interval::empty() const {
-    return end == start;
-}
+bool interval::empty() const { return end == start; }
 
-interval interval::intersection(const interval& other) const {
-    if (!non_empty() || !other.non_empty()
-        || start >= other.end || end <= other.start) {
+interval interval::intersection(const interval &other) const {
+    if (!non_empty() || !other.non_empty() || start >= other.end ||
+        end <= other.start) {
         return {};
     }
     return {std::max(start, other.start), std::min(end, other.end)};
 }
 
-bool interval::operator==(const interval& other) const {
-    if (empty()) 
+bool interval::operator==(const interval &other) const {
+    if (empty())
         return other.empty();
     return start == other.start && end == other.end;
 }
 
-bool interval::operator!=(const interval& other) const {
-    return !(*this==other);
+bool interval::operator!=(const interval &other) const {
+    return !(*this == other);
 }
 
 /*
@@ -52,7 +49,8 @@ that satisfy the following:
   * end_index = min i such that v[i] >= end
 */
 // TODO: use binary search instead of linear search for this
-std::pair<int, int> interval::overlapping_intervals(const std::vector<int> &v) const {
+std::pair<int, int>
+interval::overlapping_intervals(const std::vector<int> &v) const {
     if (start >= end || start >= v.back() || end <= v.front())
         return {-1, -1};
 
@@ -68,16 +66,15 @@ std::pair<int, int> interval::overlapping_intervals(const std::vector<int> &v) c
             break;
         }
     }
-    if (v[start_index] <= start && v[start_index + 1] > start
-        && v[end_index] >= end && v[end_index - 1] < end)
+    if (v[start_index] <= start && v[start_index + 1] > start &&
+        v[end_index] >= end && v[end_index - 1] < end)
         return {start_index, end_index};
     else
         throw std::runtime_error("bug in overlapping intervals function.");
 }
 
-std::ostream& operator<<(std::ostream &os, const interval &other) {
-    return os << "interval[" << other.start << ", " << other.end << ")" << std::endl;
+std::ostream &operator<<(std::ostream &os, const interval &other) {
+    return os << "interval[" << other.start << ", " << other.end << ")"
+              << std::endl;
 }
-}
-
-
+} // namespace grid2grid

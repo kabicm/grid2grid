@@ -3,7 +3,9 @@ namespace grid2grid {
 //     MESSAGE
 // *********************
 template <typename T>
-message<T>::message(block<T> b, int rank) : b(b), rank(rank) {}
+message<T>::message(block<T> b, int rank)
+    : b(b)
+    , rank(rank) {}
 
 template <typename T>
 block<T> message<T>::get_block() const {
@@ -26,8 +28,10 @@ bool message<T>::operator<(const message<T> &other) const {
 //   COMMUNICATION DATA
 // ************************
 template <typename T>
-communication_data<T>::communication_data(std::vector<message<T>> &&msgs, int n_ranks) :
-        messages(std::forward<std::vector<message<T>>>(msgs)), n_ranks(n_ranks) {
+communication_data<T>::communication_data(std::vector<message<T>> &&msgs,
+                                          int n_ranks)
+    : messages(std::forward<std::vector<message<T>>>(msgs))
+    , n_ranks(n_ranks) {
 
     // std::cout << "constructor of communciation data invoked" << std::endl;
     dspls = std::vector<int>(n_ranks);
@@ -37,7 +41,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &&msgs, int n_
     int offset = 0;
 
     for (unsigned i = 0; i < messages.size(); ++i) {
-        const auto& m = messages[i];
+        const auto &m = messages[i];
         int rank = m.get_rank();
         block<T> b = m.get_block();
         offset_per_message[i] = offset;
@@ -52,7 +56,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &&msgs, int n_
     }
     buffer = std::unique_ptr<T[]>(new T[total_size]);
     // buffer = std::vector<double, cosma::mpi_allocator<double>>(total_size);
-    for (unsigned i = 1; i < (unsigned) n_ranks; ++i) {
+    for (unsigned i = 1; i < (unsigned)n_ranks; ++i) {
         dspls[i] = dspls[i - 1] + counts[i - 1];
         // std::cout << "dpsls[rank] = " << dspls[i] << std::endl;
     }
@@ -60,14 +64,14 @@ communication_data<T>::communication_data(std::vector<message<T>> &&msgs, int n_
 }
 
 template <typename T>
-void copy_block_to_buffer(block<T> b, T* dest_ptr) {
+void copy_block_to_buffer(block<T> b, T *dest_ptr) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
     memory::copy2D(b.size(), b.data, b.stride, dest_ptr, b.n_rows());
 }
 
 template <typename T>
-void copy_block_from_buffer(T* src_ptr, block<T>& b) {
+void copy_block_from_buffer(T *src_ptr, block<T> &b) {
     // std::cout << "copy buffer->block" << std::endl;
     memory::copy2D(b.size(), src_ptr, b.n_rows(), b.data, b.stride);
 }
@@ -79,7 +83,7 @@ void communication_data<T>::copy_to_buffer() {
 #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < messages.size(); ++i) {
-        const auto& m = messages[i];
+        const auto &m = messages[i];
         block<T> b = m.get_block();
         // int rank = m.get_rank();
         // std::cout << "rank = " << rank << std::endl;
@@ -94,7 +98,7 @@ void communication_data<T>::copy_from_buffer() {
 #pragma omp parallel for
 #endif
     for (unsigned i = 0; i < messages.size(); ++i) {
-        const auto& m = messages[i];
+        const auto &m = messages[i];
         block<T> b = m.get_block();
         // int rank = m.get_rank();
         copy_block_from_buffer(data() + offset_per_message[i], b);
@@ -103,8 +107,7 @@ void communication_data<T>::copy_from_buffer() {
 }
 
 template <typename T>
-T* communication_data<T>::data() {
+T *communication_data<T>::data() {
     return buffer.get();
 }
-}
-
+} // namespace grid2grid

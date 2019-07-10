@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
 #include "block.hpp"
 #include "memory_utils.hpp"
-#include <memory>
 #include <chrono>
+#include <memory>
+#include <vector>
 
 #ifdef WITH_OPENMP
 #include <omp.h>
@@ -13,7 +13,8 @@
 namespace grid2grid {
 template <typename T>
 class message {
-public:
+
+  public:
     message() = default;
 
     message(block<T> b, int rank);
@@ -25,14 +26,14 @@ public:
     // implementing comparator
     bool operator<(const message<T> &other) const;
 
-private:
+  private:
     block<T> b;
     int rank = 0;
 };
 
 template <typename T>
 class communication_data {
-public:
+  public:
     std::unique_ptr<T[]> buffer;
     // std::vector<double, cosma::mpi_allocator<double>> buffer;
     std::vector<int> dspls;
@@ -49,10 +50,11 @@ public:
 
     void copy_from_buffer();
 
-    T* data();
-private:
+    T *data();
+
+  private:
     std::vector<int> offset_per_message;
 };
-}
+} // namespace grid2grid
 
 #include "communication_data.cpp"

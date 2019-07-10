@@ -1,16 +1,18 @@
 #include "grid_cover.hpp"
 
 namespace grid2grid {
-std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue, const std::vector<int> &decomp_red) {
+std::vector<interval_cover>
+get_decomp_cover(const std::vector<int> &decomp_blue,
+                 const std::vector<int> &decomp_red) {
 #ifdef DEBUG
     std::cout << "decomp_blue = " << std::endl;
-    for (const auto& v : decomp_blue) {
+    for (const auto &v : decomp_blue) {
         std::cout << v << ", ";
     }
     std::cout << std::endl;
 
     std::cout << "decomp_red = " << std::endl;
-    for (const auto& v : decomp_red) {
+    for (const auto &v : decomp_red) {
         std::cout << v << ", ";
     }
     std::cout << std::endl;
@@ -27,7 +29,7 @@ std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue
     int b = decomp_blue[0];
 
     int i_blue = 1;
-    while ((size_t) i_blue < decomp_blue.size()) {
+    while ((size_t)i_blue < decomp_blue.size()) {
         int r_left = r_prev;
         if (i_blue > 1) {
             while (r_left < decomp_blue[i_blue - 1]) {
@@ -58,7 +60,7 @@ std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue
     }
 #ifdef DEBUG
     std::cout << "cover = " << std::endl;
-    for (const auto& v : cover) {
+    for (const auto &v : cover) {
         std::cout << v << ", ";
     }
     std::cout << std::endl;
@@ -67,8 +69,9 @@ std::vector<interval_cover> get_decomp_cover(const std::vector<int> &decomp_blue
     return cover;
 }
 
-std::ostream& operator<<(std::ostream& os, const interval_cover& other) {
-    os << "interval_cover[" << other.start_index << ", " << other.end_index << "]";
+std::ostream &operator<<(std::ostream &os, const interval_cover &other) {
+    os << "interval_cover[" << other.start_index << ", " << other.end_index
+       << "]";
     return os;
 }
-}
+} // namespace grid2grid

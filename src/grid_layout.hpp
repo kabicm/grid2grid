@@ -1,22 +1,21 @@
 #pragma once
-#include "grid2D.hpp"
 #include "block.hpp"
+#include "grid2D.hpp"
 #include "mpi_type_wrapper.hpp"
 
 namespace grid2grid {
 template <typename T>
 class grid_layout {
-public:
+  public:
     grid_layout() = default;
 
-    grid_layout(assigned_grid2D&& g, local_blocks<T>&& b):
-        grid(std::forward<assigned_grid2D>(g)), blocks(std::forward<local_blocks<T>>(b)) {}
+    grid_layout(assigned_grid2D &&g, local_blocks<T> &&b)
+        : grid(std::forward<assigned_grid2D>(g))
+        , blocks(std::forward<local_blocks<T>>(b)) {}
 
-    int num_ranks() const {
-        return grid.num_ranks();
-    }
+    int num_ranks() const { return grid.num_ranks(); }
 
     assigned_grid2D grid;
     local_blocks<T> blocks;
 };
-}
+} // namespace grid2grid
