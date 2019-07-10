@@ -6,13 +6,12 @@
 #include <vector>
 
 namespace grid2grid {
+
 struct block_coordinates {
     int row = 0;
     int col = 0;
     block_coordinates() = default;
-    block_coordinates(int r, int c)
-        : row(r)
-        , col(c) {}
+    block_coordinates(int r, int c);
 };
 
 struct block_range {
@@ -20,55 +19,23 @@ struct block_range {
     interval cols_interval;
 
     block_range() = default;
-    block_range(interval r, interval c)
-        : rows_interval(r)
-        , cols_interval(c) {}
+    block_range(interval r, interval c);
 
-    bool outside_of(const block_range &range) const {
-        return (rows_interval.end < range.rows_interval.start ||
-                rows_interval.start > range.rows_interval.end) &&
-               (cols_interval.end < range.cols_interval.start ||
-                cols_interval.end < range.cols_interval.start);
-    }
+    bool outside_of(const block_range &range) const;
 
-    bool inside(const block_range &range) const {
-        return range.rows_interval.start < rows_interval.start &&
-               range.rows_interval.end > rows_interval.end &&
-               range.cols_interval.start < cols_interval.start &&
-               range.cols_interval.end > cols_interval.end;
-    }
+    bool inside(const block_range &range) const;
 
-    bool intersects(const block_range &range) const {
-        return !outside_of(range) && !inside(range);
-    }
+    bool intersects(const block_range &range) const;
 
-    block_range intersection(const block_range &other) const {
-        interval rows_intersection =
-            rows_interval.intersection(other.rows_interval);
-        interval cols_intersection =
-            cols_interval.intersection(other.cols_interval);
-        return {rows_intersection, cols_intersection};
-    }
+    block_range intersection(const block_range &other) const;
 
-    bool non_empty() const {
-        return rows_interval.non_empty() && cols_interval.non_empty();
-    }
+    bool non_empty() const;
 
-    bool empty() const {
-        return rows_interval.empty() || cols_interval.empty();
-    }
+    bool empty() const;
 
-    bool operator==(const block_range &other) const {
-        if (empty()) {
-            return other.empty();
-        }
-        return rows_interval == other.rows_interval &&
-               cols_interval == other.cols_interval;
-    }
+    bool operator==(const block_range &other) const;
 
-    bool operator!=(const block_range &other) const {
-        return !(*this == other);
-    }
+    bool operator!=(const block_range &other) const;
 };
 
 inline std::ostream &operator<<(std::ostream &os, const block_range &other) {
@@ -94,103 +61,42 @@ struct block {
     block(const assigned_grid2D &grid,
           block_coordinates coord,
           T *ptr,
-          int stride)
-        : rows_interval(grid.rows_interval(coord.row))
-        , cols_interval(grid.cols_interval(coord.col))
-        , coordinates(coord)
-        , data(ptr)
-        , stride(stride) {}
+          int stride);
 
-    block(const assigned_grid2D &grid, block_coordinates coord, T *ptr)
-        : block(grid, coord, ptr, grid.rows_interval(coord.row).length()) {}
+    block(const assigned_grid2D &grid, block_coordinates coord, T *ptr);
 
     block(interval r_inter,
           interval c_inter,
           block_coordinates coord,
           T *ptr,
-          int stride)
-        : rows_interval(r_inter)
-        , cols_interval(c_inter)
-        , coordinates(coord)
-        , data(ptr)
-        , stride(stride) {}
+          int stride);
 
-    block(interval r_inter, interval c_inter, block_coordinates coord, T *ptr)
-        : block(r_inter, c_inter, coord, ptr, r_inter.length()) {}
-
-    block(block_range &range, block_coordinates coord, T *ptr, int stride)
-        : block(range.rows_interval, range.cols_interval, coord, ptr, stride) {}
-
-    block(block_range &range, block_coordinates coord, T *ptr)
-        : block(range.rows_interval, range.cols_interval, coord, ptr) {}
-
-    // finds the index of the interval inter in splits
-    int interval_index(const std::vector<int> &splits, interval inter) {
-        auto ptr = std::lower_bound(splits.begin(), splits.end(), inter.start);
-        int index = std::distance(splits.begin(), ptr);
-        return index;
-    }
+    block(interval r_inter, interval c_inter, block_coordinates coord, T *ptr);
+    block(block_range &range, block_coordinates coord, T *ptr, int stride);
+    block(block_range &range, block_coordinates coord, T *ptr);
 
     // without coordinates
     block(const assigned_grid2D &grid,
           interval r_inter,
           interval c_inter,
           T *ptr,
-          int stride)
-        : rows_interval(r_inter)
-        , cols_interval(c_inter)
-        , data(ptr)
-        , stride(stride) {
-        // compute the coordinates based on the grid and intervals
-        int row_coord = interval_index(grid.grid().rows_split, rows_interval);
-        int col_coord = interval_index(grid.grid().cols_split, cols_interval);
-        coordinates = block_coordinates(row_coord, col_coord);
-    }
-
+          int stride);
     block(const assigned_grid2D &grid,
           interval r_inter,
           interval c_inter,
-          T *ptr)
-        : block(grid, r_inter, c_inter, ptr, r_inter.length()) {}
+          T *ptr);
+    block(const assigned_grid2D &grid, block_range &range, T *ptr, int stride);
+    block(const assigned_grid2D &grid, block_range &range, T *ptr);
 
-    block(const assigned_grid2D &grid, block_range &range, T *ptr, int stride)
-        : block(grid, range.rows_interval, range.cols_interval, ptr, stride) {}
+    // finds the index of the interval inter in splits
+    int interval_index(const std::vector<int> &splits, interval inter);
 
-    block(const assigned_grid2D &grid, block_range &range, T *ptr)
-        : block(grid, range.rows_interval, range.cols_interval, ptr) {}
+    block<T> subblock(interval r_range, interval c_range) const;
 
-    block<T> subblock(interval r_range, interval c_range) const {
-        if (!rows_interval.contains(r_range) ||
-            !cols_interval.contains(c_range)) {
-            std::cout << "BLOCK: row_interval = " << rows_interval
-                      << ", column_interval = " << cols_interval << std::endl;
-            std::cout << "SUBBLOCK: row_interval = " << r_range
-                      << ", column_interval = " << c_range << std::endl;
-            throw std::runtime_error(
-                "ERROR: current block does not contain requested subblock.");
-        }
-        // column-major ordering inside block assumed here
-        T *ptr = data + (c_range.start - cols_interval.start) * stride +
-                 (r_range.start - rows_interval.start);
-        // std::cout << "stride = " << stride << std::endl;
-        // std::cout << "ptr offset = " << (ptr - data) << std::endl;
-        return {r_range, c_range, coordinates, ptr, stride};
-    }
-
-    bool non_empty() const {
-        bool non_empty_intervals =
-            cols_interval.non_empty() && rows_interval.non_empty();
-        assert(!non_empty_intervals || data);
-        // std::cout << "data = " << data << std::endl;
-        return non_empty_intervals;
-    }
+    bool non_empty() const;
 
     // implementing comparator
-    bool operator<(const block &other) const {
-        return cols_interval.start < other.cols_interval.start ||
-               (cols_interval.start == other.cols_interval.start &&
-                rows_interval.start < other.rows_interval.start);
-    }
+    bool operator<(const block &other) const;
 
     int n_rows() const { return rows_interval.length(); }
 
@@ -211,20 +117,15 @@ template <typename T>
 class local_blocks {
   public:
     local_blocks() = default;
-    local_blocks(std::vector<block<T>> &&blocks)
-        : blocks(std::forward<std::vector<block<T>>>(blocks)) {
-        for (const auto &b : blocks) {
-            this->total_size += b.total_size();
-        }
-    }
+    local_blocks(std::vector<block<T>> &&blocks);
 
-    block<T> &get_block(int i) { return blocks[i]; }
+    block<T> &get_block(int i);
 
     const block<T> &get_block(int i) const { return blocks[i]; }
 
-    int num_blocks() const { return blocks.size(); }
+    int num_blocks() const;
 
-    size_t size() const { return total_size; }
+    size_t size() const;
 
   private:
     std::vector<block<T>> blocks;

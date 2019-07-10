@@ -13,7 +13,7 @@ endif()
 
 add_library(grid2grid STATIC "${grid2grid_SOURCE_DIR}/src/mpi_type_wrapper.hpp"
                              "${grid2grid_SOURCE_DIR}/src/cantor_mapping.hpp"
-                             "${grid2grid_SOURCE_DIR}/src/block.hpp"
+                             "${grid2grid_SOURCE_DIR}/src/block.cpp"
                              "${grid2grid_SOURCE_DIR}/src/grid2D.cpp"
                              "${grid2grid_SOURCE_DIR}/src/interval.cpp"
                              "${grid2grid_SOURCE_DIR}/src/scalapack_layout.cpp"
