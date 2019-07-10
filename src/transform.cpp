@@ -246,6 +246,21 @@ grid_layout<T> get_scalapack_grid(int lld, // local leading dim
 }
 
 template<typename T>
+grid_layout<T> get_scalapack_grid(int lld, // local leading dim
+                               scalapack::matrix_dim m_dim, // global matrix size
+                               scalapack::elem_grid_coord ij, // start of submatrix
+                               scalapack::matrix_dim subm_dim, // dim of submatrix
+                               scalapack::block_dim b_dim, // block dimension
+                               scalapack::rank_decomposition r_grid,
+                               scalapack::ordering rank_grid_ordering,
+                               bool transposed,
+                               scalapack::rank_grid_coord rank_src,
+                               const T* ptr, const int rank) {
+    return get_scalapack_grid(lld, m_dim, ij, subm_dim, b_dim,
+            r_grid, rank_grid_ordering, transposed, rank_src, const_cast<T*>(ptr), rank);
+}
+
+template<typename T>
 grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
                                scalapack::block_dim b_dim,
                                scalapack::rank_decomposition r_grid,
@@ -293,11 +308,8 @@ void transform(grid_layout<T>& initial_layout, grid_layout<T>& final_layout, MPI
     communication_data<T> recv_data = prepare_to_recv(final_layout, initial_layout);
     // auto end = std::chrono::steady_clock::now();
     // auto prepare_recv = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-
     int rank;
     MPI_Comm_rank(comm, &rank);
-    int n_ranks;
-    MPI_Comm_rank(comm, &n_ranks);
 
     // copy blocks to temporary send buffers
     // start = std::chrono::steady_clock::now();
