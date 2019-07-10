@@ -6,10 +6,6 @@
 #include <memory>
 #include <vector>
 
-#ifdef WITH_OPENMP
-#include <omp.h>
-#endif
-
 namespace grid2grid {
 template <typename T>
 class message {
@@ -56,5 +52,3 @@ class communication_data {
     std::vector<int> offset_per_message;
 };
 } // namespace grid2grid
-
-#include "communication_data.cpp"

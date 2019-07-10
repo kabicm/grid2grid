@@ -1,3 +1,6 @@
+#include <communication_data.hpp>
+#include <complex>
+
 namespace grid2grid {
 // *********************
 //     MESSAGE
@@ -79,9 +82,8 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
 template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
-#ifdef WITH_OPENMP
+
 #pragma omp parallel for
-#endif
     for (unsigned i = 0; i < messages.size(); ++i) {
         const auto &m = messages[i];
         block<T> b = m.get_block();
@@ -94,9 +96,7 @@ void communication_data<T>::copy_to_buffer() {
 template <typename T>
 void communication_data<T>::copy_from_buffer() {
     int offset = 0;
-#ifdef WITH_OPENMP
 #pragma omp parallel for
-#endif
     for (unsigned i = 0; i < messages.size(); ++i) {
         const auto &m = messages[i];
         block<T> b = m.get_block();
@@ -110,4 +110,15 @@ template <typename T>
 T *communication_data<T>::data() {
     return buffer.get();
 }
+
+template class communication_data<double>;
+template class communication_data<std::complex<double>>;
+template class communication_data<float>;
+template class communication_data<std::complex<float>>;
+
+template class message<double>;
+template class message<std::complex<double>>;
+template class message<float>;
+template class message<std::complex<float>>;
+
 } // namespace grid2grid
