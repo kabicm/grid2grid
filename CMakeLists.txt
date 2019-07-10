@@ -18,7 +18,9 @@ add_library(grid2grid STATIC "${grid2grid_SOURCE_DIR}/src/block.cpp"
                              "${grid2grid_SOURCE_DIR}/src/communication_data.cpp"
                              "${grid2grid_SOURCE_DIR}/src/grid_cover.cpp"
                              "${grid2grid_SOURCE_DIR}/src/transform.cpp")
-target_include_directories(grid2grid PUBLIC "${grid2grid_SOURCE_DIR}/src")
+target_include_directories(grid2grid PUBLIC
+  $<BUILD_INTERFACE:${grid2grid_SOURCE_DIR}/src>
+  )
 target_compile_features(grid2grid PUBLIC cxx_std_11)
 
 find_package(MPI REQUIRED)
@@ -30,4 +32,31 @@ if (GRID2GRID_NOT_SUBPROJECT)
   include(CTest)
   enable_testing()
   add_subdirectory(examples)
+endif()
+
+if (GRID2GRID_NOT_SUBPROJECT)
+    include(CMakePackageConfigHelpers)
+
+    install(TARGETS grid2grid
+            EXPORT grid2grid_targets
+            LIBRARY DESTINATION lib
+            INCLUDES DESTINATION include)
+
+    install(EXPORT grid2grid_targets
+            FILE grid2gridTargets.cmake
+            NAMESPACE grid2grid::
+            DESTINATION lib/cmake/grid2grid)
+
+    install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.hpp")
+
+    write_basic_package_version_file(
+      "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+      VERSION ${grid2grid_VERSION}
+      COMPATIBILITY SameMajorVersion)
+
+    install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
+                  "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+            DESTINATION lib/cmake/grid2grid)
 endif()
