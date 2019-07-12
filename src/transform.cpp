@@ -386,10 +386,6 @@ void transform(grid_layout<T> &initial_layout,
     }
     std::cout << std::endl;
 #endif
-    // perform a barrier, to ensure that all the nodes have
-    // prepared their send buffers
-    MPI_Barrier(comm);
-
     // start = std::chrono::steady_clock::now();
     // perform the communication
     MPI_Alltoallv(send_data.data(),
