@@ -297,6 +297,7 @@ get_scalapack_grid(int lld,                        // local leading dim
                    scalapack::rank_grid_coord rank_src,
                    const T *ptr,
                    const int rank) {
+
     return get_scalapack_grid(lld,
                               m_dim,
                               ij,

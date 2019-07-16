@@ -1,12 +1,14 @@
 #pragma once
 #include <algorithm>
 #include <cstring>
+#include <complex>
+#include <cmath>
 #include <type_traits>
 #include <utility>
+#include "block.hpp"
 
 namespace grid2grid {
 namespace memory {
-
 // copies n entries of elem_type from src_ptr to desc_ptr
 template <typename elem_type>
 void copy(std::size_t n, const elem_type *src_ptr, elem_type *dest_ptr) {
@@ -44,5 +46,30 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
         }
     }
 }
+
+template <typename T>
+void copy_and_transpose(const block<T> b, T* dest_ptr) {
+    static_assert(std::is_trivially_copyable<T>(),
+                  "Element type must be trivially copyable!");
+    if (!b.conjugate_on_copy) {
+        for (int i = 0; i < b.n_rows(); ++i) {
+            for (int j = 0; j < b.n_cols(); ++j) {
+                auto el = b.local_element(i, j);
+                int offset = i * b.n_cols() + j;
+                *(dest_ptr + offset) = el;
+            }
+        }
+    } else {
+        for (int i = 0; i < b.n_rows(); ++i) {
+            for (int j = 0; j < b.n_cols(); ++j) {
+                auto el = b.local_element(i, j);
+                int offset = i * b.n_cols() + j;
+                *(dest_ptr + offset) = std::conj(el);
+            }
+        }
+
+    }
+}
+
 } // namespace memory
 } // namespace grid2grid

@@ -5,7 +5,6 @@
 #include <iostream>
 #include <vector>
 #include <memory>
-#include "memory_utils.hpp"
 
 namespace grid2grid {
 
@@ -54,6 +53,9 @@ struct block {
     // start and end index of the block
     interval rows_interval;
     interval cols_interval;
+
+    bool transpose_on_copy = false;
+    bool conjugate_on_copy = false;
 
     block_coordinates coordinates;
 

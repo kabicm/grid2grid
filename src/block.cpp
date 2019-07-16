@@ -181,39 +181,22 @@ bool block<T>::operator<(const block &other) const {
 
 template <typename T>
 T block<T>::local_element(int li, int lj) const {
+    if (transpose_on_copy) {
+        std::swap(li, lj);
+    }
+
     assert(li >= 0 && li < n_rows());
     assert(lj >= 0 && lj < n_cols());
+
     int offset = stride * lj + li;
     return *(data + offset);
 }
-
-/*
-template <typename T>
-void block<T>::transpose_element(int li, int lj) {
-    int offset1 = stride * lj + li;
-    int offset2 = stride * li + lj;
-
-    std::swap(*(data + offset1), *(data + offset2));
-}
-
-template <typename T>
-void block<T>::transpose_and_conjugate_element(int li, int lj) {
-    int offset1 = stride * lj + li;
-    int offset2 = stride * li + lj;
-
-    auto& prev1 = *(data + offset1);
-    auto& prev2 = *(data + offset2);
-
-    *(data + offset1) = std::conj(prev2);
-    *(data + offset2) = std::conj(prev1);
-}
-*/
 
 // transpose and conjugate if necessary local block
 template <typename T>
 void block<T>::transpose_or_conjugate(char flag) {
     if (flag == 'N') return;
-
+    /*
     std::swap(rows_interval, cols_interval);
     coordinates.transpose();
 
@@ -238,6 +221,16 @@ void block<T>::transpose_or_conjugate(char flag) {
 
     memory::copy<T>(total_size(), transposed_data.get(), data);
     stride = 0;
+    */
+
+    std::swap(rows_interval, cols_interval);
+    coordinates.transpose();
+
+    if (flag == 'T' || flag == 'C') 
+        transpose_on_copy = true;
+
+    if (flag == 'C')
+        conjugate_on_copy = true;
 }
 
 template <typename T>

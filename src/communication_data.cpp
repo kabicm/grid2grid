@@ -70,7 +70,11 @@ template <typename T>
 void copy_block_to_buffer(block<T> b, T *dest_ptr) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
-    memory::copy2D(b.size(), b.data, b.stride, dest_ptr, b.n_rows());
+    if (! b.transpose_on_copy && ! b.conjugate_on_copy)
+        memory::copy2D(b.size(), b.data, b.stride, dest_ptr, b.n_rows());
+    else {
+        memory::copy_and_transpose(b, dest_ptr);
+    }
 }
 
 template <typename T>
