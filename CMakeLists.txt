@@ -36,19 +36,20 @@ endif()
 
 if (GRID2GRID_NOT_SUBPROJECT)
     include(CMakePackageConfigHelpers)
+    include(GNUInstallDirs)
 
     install(TARGETS grid2grid
             EXPORT grid2grid_targets
-            LIBRARY DESTINATION lib
-            INCLUDES DESTINATION include)
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
     install(EXPORT grid2grid_targets
             FILE grid2gridTargets.cmake
             NAMESPACE grid2grid::
-            DESTINATION lib/cmake/grid2grid)
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
 
     install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
-            DESTINATION include
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
             FILES_MATCHING PATTERN "*.hpp")
 
     write_basic_package_version_file(
@@ -58,5 +59,5 @@ if (GRID2GRID_NOT_SUBPROJECT)
 
     install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
                   "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
-            DESTINATION lib/cmake/grid2grid)
+                  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
 endif()
