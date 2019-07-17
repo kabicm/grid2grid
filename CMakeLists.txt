@@ -41,6 +41,7 @@ if (GRID2GRID_NOT_SUBPROJECT)
     install(TARGETS grid2grid
             EXPORT grid2grid_targets
             LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
     install(EXPORT grid2grid_targets
