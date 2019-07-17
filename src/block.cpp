@@ -181,9 +181,9 @@ bool block<T>::operator<(const block &other) const {
 
 template <typename T>
 T block<T>::local_element(int li, int lj) const {
-    if (transpose_on_copy) {
-        std::swap(li, lj);
-    }
+    // if (transpose_on_copy) {
+    //     std::swap(li, lj);
+    // }
 
     assert(li >= 0 && li < n_rows());
     assert(lj >= 0 && lj < n_cols());

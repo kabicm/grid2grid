@@ -54,20 +54,21 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
     if (!b.conjugate_on_copy) {
         for (int i = 0; i < b.n_rows(); ++i) {
             for (int j = 0; j < b.n_cols(); ++j) {
-                auto el = b.local_element(i, j);
+                auto el = b.local_element(j, i);
                 int offset = i * b.n_cols() + j;
+                // int offset = j * b.n_rows() + j;
                 *(dest_ptr + offset) = el;
             }
         }
     } else {
         for (int i = 0; i < b.n_rows(); ++i) {
             for (int j = 0; j < b.n_cols(); ++j) {
-                auto el = b.local_element(i, j);
+                auto el = b.local_element(j, i);
                 int offset = i * b.n_cols() + j;
+                // int offset = j * b.n_rows() + j;
                 *(dest_ptr + offset) = std::conj(el);
             }
         }
-
     }
 }
 
