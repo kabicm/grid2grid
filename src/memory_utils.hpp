@@ -9,6 +9,7 @@
 
 namespace grid2grid {
 namespace memory {
+
 // copies n entries of elem_type from src_ptr to desc_ptr
 template <typename elem_type>
 void copy(std::size_t n, const elem_type *src_ptr, elem_type *dest_ptr) {
@@ -57,7 +58,7 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
                 auto el = b.local_element(j, i);
                 int offset = i * b.n_cols() + j;
                 // int offset = j * b.n_rows() + j;
-                *(dest_ptr + offset) = el;
+                dest_ptr[offset] = el;
             }
         }
     } else {
@@ -66,11 +67,13 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
                 auto el = b.local_element(j, i);
                 int offset = i * b.n_cols() + j;
                 // int offset = j * b.n_rows() + j;
-                *(dest_ptr + offset) = std::conj(el);
+                dest_ptr[offset] = conjugate(el);
             }
         }
     }
 }
+
+
 
 } // namespace memory
 } // namespace grid2grid

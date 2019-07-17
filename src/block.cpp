@@ -3,6 +3,22 @@
 
 namespace grid2grid {
 
+double conjugate(double el) {
+    return el; 
+}
+
+float conjugate(float el) {
+    return el; 
+}
+
+std::complex<float> conjugate(std::complex<float> el) {
+    return std::conj(el); 
+}
+
+std::complex<double> conjugate(std::complex<double> el) {
+    return std::conj(el); 
+}
+
 block_coordinates::block_coordinates(int r, int c)
     : row(r)
     , col(c) {}

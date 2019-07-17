@@ -1,12 +1,22 @@
 #pragma once
 #include "grid2D.hpp"
 #include "interval.hpp"
+
 #include <algorithm>
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <complex>
 
 namespace grid2grid {
+
+double conjugate(double el);
+
+float conjugate(float el);
+
+std::complex<float> conjugate(std::complex<float> el);
+
+std::complex<double> conjugate(std::complex<double> el);
 
 struct block_coordinates {
     int row = 0;
