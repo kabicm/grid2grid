@@ -7,6 +7,10 @@ block_coordinates::block_coordinates(int r, int c)
     : row(r)
     , col(c) {}
 
+void block_coordinates::transpose() {
+    std::swap(row, col);
+}
+
 block_range::block_range(interval r, interval c)
     : rows_interval(r)
     , cols_interval(c) {}
@@ -176,6 +180,60 @@ bool block<T>::operator<(const block &other) const {
 }
 
 template <typename T>
+T block<T>::local_element(int li, int lj) const {
+    if (transpose_on_copy) {
+        std::swap(li, lj);
+    }
+
+    assert(li >= 0 && li < n_rows());
+    assert(lj >= 0 && lj < n_cols());
+
+    int offset = stride * lj + li;
+    return *(data + offset);
+}
+
+// transpose and conjugate if necessary local block
+template <typename T>
+void block<T>::transpose_or_conjugate(char flag) {
+    if (flag == 'N') return;
+    /*
+    std::swap(rows_interval, cols_interval);
+    coordinates.transpose();
+
+    auto transposed_data = std::unique_ptr<T[]>(new T[total_size()]);
+    if (flag == 'T') {
+        for (int j = 0; j < n_cols(); ++j) {
+            for (int i = 0; i < n_rows(); ++i) {
+                int offset = i * n_cols() + j;
+                auto el = local_element(i, j);
+                *(transposed_data.get()+offset) = local_element(i, j);
+            }
+        }
+    } else {
+        for (int j = 0; j < n_cols(); ++j) {
+            for (int i = 0; i < n_rows(); ++i) {
+                int offset = i * n_cols() + j;
+                auto el = local_element(i, j);
+                *(transposed_data.get()+offset) = std::conj(local_element(i, j));
+            }
+        }
+    }
+
+    memory::copy<T>(total_size(), transposed_data.get(), data);
+    stride = 0;
+    */
+
+    std::swap(rows_interval, cols_interval);
+    coordinates.transpose();
+
+    if (flag == 'T' || flag == 'C') 
+        transpose_on_copy = true;
+
+    if (flag == 'C')
+        conjugate_on_copy = true;
+}
+
+template <typename T>
 local_blocks<T>::local_blocks(std::vector<block<T>> &&blocks)
     : blocks(std::forward<std::vector<block<T>>>(blocks)) {
     for (const auto &b : blocks) {
@@ -196,6 +254,13 @@ int local_blocks<T>::num_blocks() const {
 template <typename T>
 size_t local_blocks<T>::size() const {
     return total_size;
+}
+
+template <typename T>
+void local_blocks<T>::transpose_or_conjugate(char flag) {
+    for (auto& b: blocks) {
+        b.transpose_or_conjugate(flag);
+    }
 }
 
 template struct block<double>;

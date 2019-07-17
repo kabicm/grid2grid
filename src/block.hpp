@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <memory>
 
 namespace grid2grid {
 
@@ -12,6 +13,8 @@ struct block_coordinates {
     int col = 0;
     block_coordinates() = default;
     block_coordinates(int r, int c);
+
+    void transpose();
 };
 
 struct block_range {
@@ -50,6 +53,9 @@ struct block {
     // start and end index of the block
     interval rows_interval;
     interval cols_interval;
+
+    bool transpose_on_copy = false;
+    bool conjugate_on_copy = false;
 
     block_coordinates coordinates;
 
@@ -105,6 +111,10 @@ struct block {
     std::pair<int, int> size() const { return {n_rows(), n_cols()}; }
 
     size_t total_size() const { return n_rows() * n_cols(); }
+
+    T local_element(int li, int lj) const;
+
+    void transpose_or_conjugate(char flag);
 };
 
 template <typename T>
@@ -126,6 +136,8 @@ class local_blocks {
     int num_blocks() const;
 
     size_t size() const;
+
+    void transpose_or_conjugate(char flag);
 
   private:
     std::vector<block<T>> blocks;

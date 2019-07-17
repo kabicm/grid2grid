@@ -15,6 +15,13 @@ class grid_layout {
 
     int num_ranks() const { return grid.num_ranks(); }
 
+    void transpose_or_conjugate(char flag) {
+        if (flag == 'T' || flag == 'C') {
+            grid.transpose();
+            blocks.transpose_or_conjugate(flag);
+        }
+    }
+
     assigned_grid2D grid;
     local_blocks<T> blocks;
 };

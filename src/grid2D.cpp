@@ -36,6 +36,11 @@ interval grid2D::col_interval(int index) const {
     return {cols_split[index], cols_split[index + 1]};
 }
 
+void grid2D::transpose() {
+    std::swap(rows_split, cols_split);
+    std::swap(n_rows, n_cols);
+}
+
 /*
 A class describing a matrix split into an arbitrary grid (grid2D) where each
 block is assigned to an arbitrary MPI rank. More precisely, a block with
@@ -73,5 +78,23 @@ interval assigned_grid2D::cols_interval(int index) const {
 int assigned_grid2D::block_size(int row_index, int col_index) {
     return rows_interval(row_index).length() *
            cols_interval(col_index).length();
+}
+
+std::vector<std::vector<int>> assigned_grid2D::transpose(const std::vector<std::vector<int>>& v) {
+    int m = v.size();
+    int n = v.size() == 0 ? 0 : v[0].size();
+
+    std::vector<std::vector<int>> transposed(n, std::vector<int>(m));
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < n; ++j) {
+            transposed[j][i] = v[i][j];
+        }
+    }
+    return transposed;
+}
+
+void assigned_grid2D::transpose() {
+    g.transpose();
+    ranks = transpose(ranks);
 }
 } // namespace grid2grid

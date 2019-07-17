@@ -32,6 +32,8 @@ struct grid2D {
     // returns index-th column interval, i.e. [cols_split[index],
     // cols_split[index + 1])
     interval col_interval(int index) const;
+
+    void transpose();
 };
 
 /*
@@ -66,9 +68,17 @@ class assigned_grid2D {
 
     int block_size(int row_index, int col_index);
 
+    // if flag='N' => no transpose
+    // if flag='T' => transpose
+    // if flag='C' => transpose and conjugate
+    void transpose();
+
   private:
+    std::vector<std::vector<int>> transpose(const std::vector<std::vector<int>>& v);
+
     grid2D g;
     std::vector<std::vector<int>> ranks;
     int n_ranks = 0;
 };
+
 } // namespace grid2grid
