@@ -6,6 +6,8 @@ endif()
 
 project(grid2grid VERSION 0.1 LANGUAGES CXX)
 
+option(GRID2GRID_BUILD_EXAMPLES "Build examples." OFF)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
     "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release." FORCE)
@@ -27,11 +29,11 @@ find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 target_link_libraries(grid2grid OpenMP::OpenMP_CXX MPI::MPI_CXX)
 
-if (GRID2GRID_NOT_SUBPROJECT)
-  add_subdirectory(libs)
-  include(CTest)
-  enable_testing()
-  add_subdirectory(examples)
+if (GRID2GRID_BUILD_EXAMPLES)
+    add_subdirectory(libs)
+    include(CTest)
+    enable_testing()
+    add_subdirectory(examples)
 endif()
 
 if (GRID2GRID_NOT_SUBPROJECT)
