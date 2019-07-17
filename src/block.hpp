@@ -122,7 +122,8 @@ struct block {
 
     size_t total_size() const { return n_rows() * n_cols(); }
 
-    T local_element(int li, int lj) const;
+    const T& local_element(int li, int lj) const;
+    T& local_element(int li, int lj);
 
     void transpose_or_conjugate(char flag);
 };

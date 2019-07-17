@@ -74,7 +74,7 @@ void copy_block_to_buffer(block<T> b, T *dest_ptr) {
         memory::copy2D(b.size(), b.data, b.stride, dest_ptr, b.n_rows());
     else {
         memory::copy_and_transpose(b, dest_ptr);
-        b.stride = b.n_cols();
+        // b.stride = b.n_cols();
     }
 }
 
@@ -84,8 +84,8 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
     if (! b.transpose_on_copy && ! b.conjugate_on_copy)
         memory::copy2D(b.size(), src_ptr, b.n_rows(), b.data, b.stride);
     else  {
-        assert(b.n_cols() == b.stride);
-        memory::copy2D(b.size(), src_ptr, b.n_cols(), b.data, b.stride);
+        // memory::copy2D(b.size(), src_ptr, b.n_cols(), b.data, b.stride, false);
+        memory::copy_transposed_back(src_ptr, b);
     }
 }
 

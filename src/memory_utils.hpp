@@ -25,7 +25,8 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
             const elem_type *src_ptr,
             int ld_src,
             elem_type *dest_ptr,
-            int ld_dest) {
+            int ld_dest,
+            bool col_major = true) {
     static_assert(std::is_trivially_copyable<elem_type>(),
                   "Element type must be trivially copyable!");
     auto block_size = block_dim.first * block_dim.second;
@@ -34,46 +35,58 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
         return;
     }
 
+    auto dim = block_dim;
+    if (!col_major) {
+        dim = std::make_pair(block_dim.second, block_dim.first);
+    }
+
     // if not strided, copy in a single piece
-    if (block_dim.first == (size_t)ld_src &&
-        block_dim.first == (size_t)ld_dest) {
+    if (dim.first == (size_t)ld_src &&
+        dim.first == (size_t)ld_dest) {
         copy(block_size, src_ptr, dest_ptr);
     } else {
         // if strided, copy column-by-column
-        for (unsigned col = 0; col < block_dim.second; ++col) {
-            copy(block_dim.first,
+        for (unsigned col = 0; col < dim.second; ++col) {
+            copy(dim.first,
                  src_ptr + ld_src * col,
                  dest_ptr + ld_dest * col);
         }
     }
 }
 
+// copy from block to MPI send buffer
 template <typename T>
 void copy_and_transpose(const block<T> b, T* dest_ptr) {
     static_assert(std::is_trivially_copyable<T>(),
                   "Element type must be trivially copyable!");
-    if (!b.conjugate_on_copy) {
-        for (int i = 0; i < b.n_rows(); ++i) {
-            for (int j = 0; j < b.n_cols(); ++j) {
-                auto el = b.local_element(j, i);
-                int offset = i * b.n_cols() + j;
-                // int offset = j * b.n_rows() + j;
-                dest_ptr[offset] = el;
-            }
-        }
-    } else {
-        for (int i = 0; i < b.n_rows(); ++i) {
-            for (int j = 0; j < b.n_cols(); ++j) {
-                auto el = b.local_element(j, i);
-                int offset = i * b.n_cols() + j;
-                // int offset = j * b.n_rows() + j;
-                dest_ptr[offset] = conjugate(el);
-            }
+    // n_rows and n_cols before transposing
+    int n_rows = b.n_cols();
+    int n_cols = b.n_rows();
+    for (int i = 0; i < n_rows; ++i) {
+        for (int j = 0; j < n_cols; ++j) {
+            // (i, j) in the original block, column-major
+            auto el = b.local_element(i, j);
+            // (j, i) in the send buffer, column-major
+            int offset = i * n_cols + j;
+            if (b.conjugate_on_copy)
+                el = conjugate(el);
+            dest_ptr[offset] = el;
         }
     }
 }
 
-
-
+template <typename T>
+void copy_transposed_back(const T* src_ptr, block<T> b) {
+    static_assert(std::is_trivially_copyable<T>(),
+                  "Element type must be trivially copyable!");
+    for (int j = 0; j < b.n_cols(); ++j) {
+        for (int i = 0; i < b.n_rows(); ++i) {
+            // (i, j) in the recv buffer, column-major
+            int offset = j * b.n_cols() + i;
+            // (i, j) in the original block, column-major
+            b.local_element(j, i) = src_ptr[offset];
+        }
+    }
+}
 } // namespace memory
 } // namespace grid2grid
