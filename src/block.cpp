@@ -172,11 +172,25 @@ block<T> block<T>::subblock(interval r_range, interval c_range) const {
             "ERROR: current block does not contain requested subblock.");
     }
     // column-major ordering inside block assumed here
-    T *ptr = data + (c_range.start - cols_interval.start) * stride +
-             (r_range.start - rows_interval.start);
+    auto r_interval = rows_interval;
+    auto c_interval = cols_interval;
+    auto coord = coordinates;
+
+    if (transpose_on_copy) {
+        std::swap(r_range, c_range);
+        std::swap(r_interval, c_interval);
+        coord.transpose();
+    }
+    T *ptr = data + (c_range.start - c_interval.start) * stride +
+             (r_range.start - r_interval.start);
     // std::cout << "stride = " << stride << std::endl;
     // std::cout << "ptr offset = " << (ptr - data) << std::endl;
-    return {r_range, c_range, coordinates, ptr, stride};
+    block<T> b(r_range, c_range, coordinates, ptr, stride);
+    char flag = transpose_on_copy ? 'T' : 'N';
+    if (conjugate_on_copy)
+        flag = 'C';
+    b.transpose_or_conjugate(flag);
+    return b;
 }
 
 template <typename T>

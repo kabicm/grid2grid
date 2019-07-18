@@ -70,7 +70,7 @@ template <typename T>
 void copy_block_to_buffer(block<T> b, T *dest_ptr) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
-    if (! b.transpose_on_copy && ! b.conjugate_on_copy)
+    if (!b.transpose_on_copy)
         memory::copy2D(b.size(), b.data, b.stride, dest_ptr, b.n_rows());
     else {
         memory::copy_and_transpose(b, dest_ptr);
@@ -81,12 +81,7 @@ void copy_block_to_buffer(block<T> b, T *dest_ptr) {
 template <typename T>
 void copy_block_from_buffer(T *src_ptr, block<T> &b) {
     // std::cout << "copy buffer->block" << std::endl;
-    if (! b.transpose_on_copy && ! b.conjugate_on_copy)
-        memory::copy2D(b.size(), src_ptr, b.n_rows(), b.data, b.stride);
-    else  {
-        // memory::copy2D(b.size(), src_ptr, b.n_cols(), b.data, b.stride, false);
-        memory::copy_transposed_back(src_ptr, b);
-    }
+    memory::copy2D(b.size(), src_ptr, b.n_rows(), b.data, b.stride);
 }
 
 template <typename T>

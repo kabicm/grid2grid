@@ -59,15 +59,21 @@ template <typename T>
 void copy_and_transpose(const block<T> b, T* dest_ptr) {
     static_assert(std::is_trivially_copyable<T>(),
                   "Element type must be trivially copyable!");
+    assert(b.non_empty());
     // n_rows and n_cols before transposing
     int n_rows = b.n_cols();
     int n_cols = b.n_rows();
+    // n_rows and n_cols after transposing
+    int n_rows_t = n_cols;
+    int n_cols_t = n_rows;
+
     for (int i = 0; i < n_rows; ++i) {
         for (int j = 0; j < n_cols; ++j) {
             // (i, j) in the original block, column-major
-            auto el = b.local_element(i, j);
+            auto el = b.data[j * b.stride + i];
+            // auto el = b.local_element(i, j);
             // (j, i) in the send buffer, column-major
-            int offset = i * n_cols + j;
+            int offset = i * n_rows_t + j;
             if (b.conjugate_on_copy)
                 el = conjugate(el);
             dest_ptr[offset] = el;
@@ -82,9 +88,9 @@ void copy_transposed_back(const T* src_ptr, block<T> b) {
     for (int j = 0; j < b.n_cols(); ++j) {
         for (int i = 0; i < b.n_rows(); ++i) {
             // (i, j) in the recv buffer, column-major
-            int offset = j * b.n_cols() + i;
             // (i, j) in the original block, column-major
-            b.local_element(j, i) = src_ptr[offset];
+            // b.local_element(j, i) = src_ptr[j * b.n_rows() + i];
+            b.data[j * b.stride + i] = src_ptr[j * b.n_rows() + i];
         }
     }
 }
