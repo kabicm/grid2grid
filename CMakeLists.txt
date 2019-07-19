@@ -36,31 +36,29 @@ if (GRID2GRID_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-if (GRID2GRID_NOT_SUBPROJECT)
-    include(CMakePackageConfigHelpers)
-    include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
-    install(TARGETS grid2grid
-            EXPORT grid2grid_targets
-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+install(TARGETS grid2grid
+        EXPORT grid2grid_targets
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-    install(EXPORT grid2grid_targets
-            FILE grid2gridTargets.cmake
-            NAMESPACE grid2grid::
-            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
+install(EXPORT grid2grid_targets
+        FILE grid2gridTargets.cmake
+        NAMESPACE grid2grid::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
 
-    install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
-            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-            FILES_MATCHING PATTERN "*.hpp")
+install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        FILES_MATCHING PATTERN "*.hpp")
 
-    write_basic_package_version_file(
-      "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
-      VERSION ${grid2grid_VERSION}
-      COMPATIBILITY SameMajorVersion)
+write_basic_package_version_file(
+  "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+  VERSION ${grid2grid_VERSION}
+  COMPATIBILITY SameMajorVersion)
 
-    install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
-                  "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
-                  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
-endif()
+install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
+              "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+              DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
