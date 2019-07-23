@@ -1,12 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 
+set(MASTER_PROJECT OFF)
 if(NOT DEFINED PROJECT_NAME)
-  set(GRID2GRID_NOT_SUBPROJECT ON)
+    set(MASTER_PROJECT ON)
 endif()
 
-project(grid2grid VERSION 0.1 LANGUAGES CXX)
+option(GRID2GRID_WITH_EXAMPLES "Enable examples." ${MASTER_PROJECT})
+option(GRID2GRID_WITH_INSTALL "Enable installation." ${MASTER_PROJECT})
 
-option(GRID2GRID_BUILD_EXAMPLES "Build examples." OFF)
+project(grid2grid VERSION 0.1 LANGUAGES CXX)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
@@ -29,36 +31,38 @@ find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
 target_link_libraries(grid2grid OpenMP::OpenMP_CXX MPI::MPI_CXX)
 
-if (GRID2GRID_BUILD_EXAMPLES)
+if (GRID2GRID_WITH_EXAMPLES)
     add_subdirectory(libs)
-    include(CTest)
     enable_testing()
     add_subdirectory(examples)
 endif()
 
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirs)
+if(GRID2GRID_WITH_INSTALL)
+    include(CMakePackageConfigHelpers)
+    include(GNUInstallDirs)
+    
+    install(TARGETS grid2grid
+            EXPORT grid2grid_targets
+            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+    
+    install(EXPORT grid2grid_targets
+            FILE grid2gridTargets.cmake
+            NAMESPACE grid2grid::
+            DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
+    
+    install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
+            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+            FILES_MATCHING PATTERN "*.hpp")
+    
+    write_basic_package_version_file(
+      "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+      VERSION ${grid2grid_VERSION}
+      COMPATIBILITY SameMajorVersion)
+    
+    install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
+                  "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
+                  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
+endif()
 
-install(TARGETS grid2grid
-        EXPORT grid2grid_targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-
-install(EXPORT grid2grid_targets
-        FILE grid2gridTargets.cmake
-        NAMESPACE grid2grid::
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
-
-install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
-        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        FILES_MATCHING PATTERN "*.hpp")
-
-write_basic_package_version_file(
-  "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
-  VERSION ${grid2grid_VERSION}
-  COMPATIBILITY SameMajorVersion)
-
-install(FILES "${grid2grid_SOURCE_DIR}/cmake/grid2gridConfig.cmake"
-              "${grid2grid_BINARY_DIR}/grid2gridConfigVersion.cmake"
-              DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
