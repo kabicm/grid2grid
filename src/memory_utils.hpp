@@ -67,8 +67,8 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
     int n_rows_t = n_cols;
     int n_cols_t = n_rows;
 
-    for (int i = 0; i < n_rows; ++i) {
-        for (int j = 0; j < n_cols; ++j) {
+    for (int j = 0; j < n_cols; ++j) {
+        for (int i = 0; i < n_rows; ++i) {
             // (i, j) in the original block, column-major
             auto el = b.data[j * b.stride + i];
             // auto el = b.local_element(i, j);
@@ -85,8 +85,8 @@ template <typename T>
 void copy_transposed_back(const T* src_ptr, block<T> b) {
     static_assert(std::is_trivially_copyable<T>(),
                   "Element type must be trivially copyable!");
-    for (int j = 0; j < b.n_cols(); ++j) {
-        for (int i = 0; i < b.n_rows(); ++i) {
+    for (int i = 0; i < b.n_rows(); ++i) {
+        for (int j = 0; j < b.n_cols(); ++j) {
             // (i, j) in the recv buffer, column-major
             // (i, j) in the original block, column-major
             // b.local_element(j, i) = src_ptr[j * b.n_rows() + i];
