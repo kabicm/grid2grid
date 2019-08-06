@@ -1,4 +1,5 @@
-#include <block.hpp>
+#include <grid2grid/block.hpp>
+
 #include <complex>
 
 namespace grid2grid {

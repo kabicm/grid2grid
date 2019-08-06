@@ -1,7 +1,7 @@
 #pragma once
+#include <grid2grid/block.hpp>
+#include <grid2grid/memory_utils.hpp>
 
-#include "block.hpp"
-#include "memory_utils.hpp"
 #include <chrono>
 #include <memory>
 #include <vector>

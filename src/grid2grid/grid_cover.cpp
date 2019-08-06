@@ -1,4 +1,4 @@
-#include "grid_cover.hpp"
+#include <grid2grid/grid_cover.hpp>
 
 namespace grid2grid {
 std::vector<interval_cover>

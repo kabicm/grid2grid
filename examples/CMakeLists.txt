@@ -1,7 +1,7 @@
 ################
 #  Build test  #
 ################
-add_executable(scalapack2scalapack "scalapack2scalapack.cpp")
+add_executable(scalapack2scalapack scalapack2scalapack.cpp)
 target_link_libraries(scalapack2scalapack PRIVATE grid2grid options)
 
 ################

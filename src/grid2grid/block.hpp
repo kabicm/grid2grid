@@ -1,6 +1,6 @@
 #pragma once
-#include "grid2D.hpp"
-#include "interval.hpp"
+#include <grid2grid/grid2D.hpp>
+#include <grid2grid/interval.hpp>
 
 #include <algorithm>
 #include <iostream>

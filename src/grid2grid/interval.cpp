@@ -1,4 +1,4 @@
-#include "interval.hpp"
+#include <grid2grid/interval.hpp>
 
 namespace grid2grid {
 // A class describing the interval [start, end)

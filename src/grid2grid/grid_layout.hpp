@@ -1,7 +1,7 @@
 #pragma once
-#include "block.hpp"
-#include "grid2D.hpp"
-#include "mpi_type_wrapper.hpp"
+#include <grid2grid/block.hpp>
+#include <grid2grid/grid2D.hpp>
+#include <grid2grid/mpi_type_wrapper.hpp>
 
 namespace grid2grid {
 template <typename T>

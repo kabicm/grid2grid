@@ -1,5 +1,8 @@
-#include <complex>
+#pragma once
+
 #include <mpi.h>
+
+#include <complex>
 
 namespace grid2grid {
 

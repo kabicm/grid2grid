@@ -1,4 +1,5 @@
-#include <communication_data.hpp>
+#include <grid2grid/communication_data.hpp>
+
 #include <complex>
 
 namespace grid2grid {

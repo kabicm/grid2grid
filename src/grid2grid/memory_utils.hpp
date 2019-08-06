@@ -1,11 +1,12 @@
 #pragma once
+#include <grid2grid/block.hpp>
+
 #include <algorithm>
 #include <cstring>
 #include <complex>
 #include <cmath>
 #include <type_traits>
 #include <utility>
-#include "block.hpp"
 
 namespace grid2grid {
 namespace memory {

@@ -1,4 +1,14 @@
 #pragma once
+
+#include <grid2grid/block.hpp>
+#include <grid2grid/communication_data.hpp>
+#include <grid2grid/grid2D.hpp>
+#include <grid2grid/grid_cover.hpp>
+#include <grid2grid/grid_layout.hpp>
+#include <grid2grid/interval.hpp>
+#include <grid2grid/memory_utils.hpp>
+#include <grid2grid/scalapack_layout.hpp>
+
 #include <algorithm>
 #include <assert.h>
 #include <chrono>
@@ -8,14 +18,6 @@
 #include <tuple>
 #include <utility>
 
-#include "block.hpp"
-#include "communication_data.hpp"
-#include "grid2D.hpp"
-#include "grid_cover.hpp"
-#include "grid_layout.hpp"
-#include "interval.hpp"
-#include "memory_utils.hpp"
-#include "scalapack_layout.hpp"
 
 namespace grid2grid {
 // template <typename T>

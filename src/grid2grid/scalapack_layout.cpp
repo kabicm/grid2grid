@@ -1,4 +1,5 @@
-#include "scalapack_layout.hpp"
+#include <grid2grid/scalapack_layout.hpp>
+
 namespace grid2grid {
 namespace scalapack {
 

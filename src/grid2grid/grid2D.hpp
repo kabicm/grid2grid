@@ -1,5 +1,6 @@
 #pragma once
-#include "interval.hpp"
+#include <grid2grid/interval.hpp>
+
 #include <vector>
 
 namespace grid2grid {

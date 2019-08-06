@@ -1,14 +1,15 @@
-// STL
-#include <algorithm>
-#include <iostream>
-#include <vector>
+#include <grid2grid/transform.hpp>
+#include <grid2grid/cantor_mapping.hpp>
+
 #include <mpi.h>
 
-// Local
-#include <transform.hpp>
-#include <cantor_mapping.hpp>
 #include <options.hpp>
+
+#include <algorithm>
+#include <iostream>
 #include <string>
+#include <vector>
+
 
 using namespace grid2grid;
 

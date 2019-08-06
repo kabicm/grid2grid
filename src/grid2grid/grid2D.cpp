@@ -1,4 +1,5 @@
-#include "grid2D.hpp"
+#include <grid2grid/grid2D.hpp>
+
 namespace grid2grid {
 /*
     A class describing a matrix n_rows x n_cols split into an arbitrary grid.

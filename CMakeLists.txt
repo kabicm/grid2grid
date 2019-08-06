@@ -15,21 +15,14 @@ if(NOT CMAKE_BUILD_TYPE)
     "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release." FORCE)
 endif()
 
-add_library(grid2grid STATIC "${grid2grid_SOURCE_DIR}/src/block.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/grid2D.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/interval.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/scalapack_layout.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/communication_data.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/grid_cover.cpp"
-                             "${grid2grid_SOURCE_DIR}/src/transform.cpp")
-target_include_directories(grid2grid PUBLIC
-  $<BUILD_INTERFACE:${grid2grid_SOURCE_DIR}/src>
-  )
-target_compile_features(grid2grid PUBLIC cxx_std_11)
-
+# Dependencies
+#
 find_package(MPI REQUIRED)
 find_package(OpenMP REQUIRED)
-target_link_libraries(grid2grid OpenMP::OpenMP_CXX MPI::MPI_CXX)
+
+# Grid2grid
+#
+add_subdirectory(src/grid2grid)
 
 if (GRID2GRID_WITH_EXAMPLES)
     add_subdirectory(libs)
@@ -41,18 +34,12 @@ if(GRID2GRID_WITH_INSTALL)
     include(CMakePackageConfigHelpers)
     include(GNUInstallDirs)
     
-    install(TARGETS grid2grid
-            EXPORT grid2grid_targets
-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-    
     install(EXPORT grid2grid_targets
             FILE grid2gridTargets.cmake
             NAMESPACE grid2grid::
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/grid2grid")
     
-    install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/"
+    install(DIRECTORY "${grid2grid_SOURCE_DIR}/src/grid2grid"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
             FILES_MATCHING PATTERN "*.hpp")
     
