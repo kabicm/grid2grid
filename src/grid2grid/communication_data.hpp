@@ -13,9 +13,10 @@ class message {
   public:
     message() = default;
 
-    message(block<T> b, int rank);
+    message(block<T>& b, int rank);
 
-    block<T> get_block() const;
+    block<T>& get_block() ;
+    const block<T>& get_block() const;
 
     int get_rank() const;
 

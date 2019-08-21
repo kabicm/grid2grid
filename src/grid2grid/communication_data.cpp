@@ -7,12 +7,17 @@ namespace grid2grid {
 //     MESSAGE
 // *********************
 template <typename T>
-message<T>::message(block<T> b, int rank)
+message<T>::message(block<T>& b, int rank)
     : b(b)
     , rank(rank) {}
 
 template <typename T>
-block<T> message<T>::get_block() const {
+block<T>& message<T>::get_block() {
+    return b;
+}
+
+template <typename T>
+const block<T>& message<T>::get_block() const {
     return b;
 }
 
@@ -68,7 +73,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &&msgs,
 }
 
 template <typename T>
-void copy_block_to_buffer(block<T> b, T *dest_ptr) {
+void copy_block_to_buffer(block<T>& b, T *dest_ptr) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
     if (!b.transpose_on_copy)
@@ -89,9 +94,9 @@ template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < messages.size(); ++i) {
-        const auto &m = messages[i];
+        auto &m = messages[i];
         block<T> b = m.get_block();
         // int rank = m.get_rank();
         // std::cout << "rank = " << rank << std::endl;
@@ -102,9 +107,9 @@ void communication_data<T>::copy_to_buffer() {
 template <typename T>
 void communication_data<T>::copy_from_buffer() {
     int offset = 0;
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < messages.size(); ++i) {
-        const auto &m = messages[i];
+        auto &m = messages[i];
         block<T> b = m.get_block();
         // int rank = m.get_rank();
         copy_block_from_buffer(data() + offset_per_message[i], b);
