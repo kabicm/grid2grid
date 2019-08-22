@@ -58,16 +58,13 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
 
 // copy from block to MPI send buffer
 template <typename T>
-void copy_and_transpose(const block<T> b, T* dest_ptr) {
+void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
     assert(b.non_empty());
     // n_rows and n_cols before transposing
     int n_rows = b.n_cols();
     int n_cols = b.n_rows();
-    // n_rows and n_cols after transposing
-    int n_rows_t = n_cols;
-    int n_cols_t = n_rows;
 
     int block_dim = 32;
     int block_i;
@@ -86,7 +83,7 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
                     // (j, i) in the send buffer, column-major
                     if (b.conjugate_on_copy)
                         el = conjugate(el);
-                    dest_ptr[i*n_rows_t + j] = el;
+                    dest_ptr[i*dest_stride + j] = el;
                 }
             }
         }

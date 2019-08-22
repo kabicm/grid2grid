@@ -85,18 +85,20 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
 
 template <typename T>
 communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
-                                      const grid_layout<T> &final_layout) {
+                                      const grid_layout<T> &final_layout,
+                                      int rank) {
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
-    return communication_data<T>(std::move(messages), final_layout.num_ranks());
+    return communication_data<T>(messages, rank, final_layout.num_ranks());
 }
 
 template <typename T>
 communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
-                                      const grid_layout<T> &init_layout) {
+                                      const grid_layout<T> &init_layout,
+                                      int rank) {
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
-    return communication_data<T>(std::move(messages), init_layout.num_ranks());
+    return communication_data<T>(messages, rank, init_layout.num_ranks());
 }
 
 inline std::vector<int>
@@ -361,23 +363,23 @@ template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm) {
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
     // MPI_Barrier(comm);
     // auto total_start = std::chrono::steady_clock::now();
     communication_data<T> send_data =
-        prepare_to_send(initial_layout, final_layout);
+        prepare_to_send(initial_layout, final_layout, rank);
     // auto start = std::chrono::steady_clock::now();
     // auto prepare_send =
     // std::chrono::duration_cast<std::chrono::milliseconds>(start -
     // total_start).count();
     communication_data<T> recv_data =
-        prepare_to_recv(final_layout, initial_layout);
+        prepare_to_recv(final_layout, initial_layout, rank);
     // auto end = std::chrono::steady_clock::now();
     // auto prepare_recv =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
     // start).count();
-    int rank;
-    MPI_Comm_rank(comm, &rank);
-
     // copy blocks to temporary send buffers
     // start = std::chrono::steady_clock::now();
     PE(transformation_pack);
@@ -428,6 +430,10 @@ void transform(grid_layout<T> &initial_layout,
     PE(transformation_unpack);
     recv_data.copy_from_buffer();
     PL();
+
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
     // end = std::chrono::steady_clock::now();
     // auto copy_from_buffer_duration =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -

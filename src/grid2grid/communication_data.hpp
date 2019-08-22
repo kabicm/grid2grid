@@ -34,13 +34,19 @@ class communication_data {
     // std::vector<double, cosma::mpi_allocator<double>> buffer;
     std::vector<int> dspls;
     std::vector<int> counts;
-    std::vector<message<T>> messages;
+    // mpi_messages are the ones that have to be
+    // communicated to a different rank
+    std::vector<message<T>> mpi_messages;
+    // blocks which should be copied locally,
+    // and not through MPI
+    std::vector<block<T>> local_blocks;
     int n_ranks = 0;
     int total_size = 0;
+    int my_rank;
 
     communication_data() = default;
 
-    communication_data(std::vector<message<T>> &&msgs, int n_ranks);
+    communication_data(std::vector<message<T>> &msgs, int my_rank, int n_ranks);
 
     void copy_to_buffer();
 
@@ -51,4 +57,7 @@ class communication_data {
   private:
     std::vector<int> offset_per_message;
 };
+
+template <typename T>
+void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to);
 } // namespace grid2grid
