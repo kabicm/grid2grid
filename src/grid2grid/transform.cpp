@@ -1,6 +1,5 @@
 #include <grid2grid/transform.hpp>
-#include <semiprof.hpp>
-
+#include <grid2grid/profiler.hpp>
 #include <complex>
 
 namespace grid2grid {
