@@ -10,7 +10,13 @@ target_include_directories(grid2grid PUBLIC
   $<BUILD_INTERFACE:${grid2grid_SOURCE_DIR}/src>
   )
 
-target_link_libraries(grid2grid OpenMP::OpenMP_CXX MPI::MPI_CXX)
+target_link_libraries(grid2grid PUBLIC OpenMP::OpenMP_CXX MPI::MPI_CXX)
+
+if(GRID2GRID_WITH_PROFILING)
+    target_link_libraries(grid2grid PRIVATE 
+    $<BUILD_INTERFACE:semiprof>
+    )
+endif()
 
 target_compile_features(grid2grid PUBLIC cxx_std_11)
 

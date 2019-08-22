@@ -7,6 +7,7 @@ endif()
 
 option(GRID2GRID_WITH_EXAMPLES "Enable examples." ${MASTER_PROJECT})
 option(GRID2GRID_WITH_INSTALL "Enable installation." ${MASTER_PROJECT})
+option(GRID2GRID_WITH_PROFILING "Enable profiling." OFF)
 
 project(grid2grid VERSION 0.1 LANGUAGES CXX)
 
@@ -24,8 +25,12 @@ find_package(OpenMP REQUIRED)
 #
 add_subdirectory(src/grid2grid)
 
+if(GRID2GRID_WITH_PROFILING)
+    add_subdirectory(libs/semiprof)
+endif()
+
 if (GRID2GRID_WITH_EXAMPLES)
-    add_subdirectory(libs)
+    add_subdirectory(libs/options)
     enable_testing()
     add_subdirectory(examples)
 endif()
