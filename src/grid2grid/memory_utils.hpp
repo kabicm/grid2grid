@@ -55,11 +55,12 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
     }
 }
 
+
 // copy from block to MPI send buffer
 template <typename T>
 void copy_and_transpose(const block<T> b, T* dest_ptr) {
     static_assert(std::is_trivially_copyable<T>(),
-                  "Element type must be trivially copyable!");
+            "Element type must be trivially copyable!");
     assert(b.non_empty());
     // n_rows and n_cols before transposing
     int n_rows = b.n_cols();
@@ -68,16 +69,26 @@ void copy_and_transpose(const block<T> b, T* dest_ptr) {
     int n_rows_t = n_cols;
     int n_cols_t = n_rows;
 
-    for (int j = 0; j < n_cols; ++j) {
-        for (int i = 0; i < n_rows; ++i) {
-            // (i, j) in the original block, column-major
-            auto el = b.data[j * b.stride + i];
-            // auto el = b.local_element(i, j);
-            // (j, i) in the send buffer, column-major
-            int offset = i * n_rows_t + j;
-            if (b.conjugate_on_copy)
-                el = conjugate(el);
-            dest_ptr[offset] = el;
+    int block_dim = 32;
+    int block_i;
+    int block_j;
+
+    // #pragma omp parallel for collapse(2)
+    for (block_i = 0; block_i < n_rows; block_i += block_dim) {
+        for (block_j = 0; block_j < n_cols; block_j += block_dim) {
+            // #pragma omp task firstprivate(block_i, block_j, dest_ptr, ptr, stride, conj, n_rows_t)
+            for (int i = block_i; i < std::min(n_rows, block_i + block_dim); ++i) {
+                for (int j = block_j; j < std::min(n_cols, block_j + block_dim); ++j) {
+                    // for (int j = std::min(n_cols, block_j + block_dim)-1; j >= 0; --j) {
+                    // (i, j) in the original block, column-major
+                    auto el = b.data[j * b.stride + i];
+                    // auto el = b.local_element(i, j);
+                    // (j, i) in the send buffer, column-major
+                    if (b.conjugate_on_copy)
+                        el = conjugate(el);
+                    dest_ptr[i*n_rows_t + j] = el;
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 #include <grid2grid/transform.hpp>
+#include <semiprof.hpp>
 
 #include <complex>
 
@@ -380,7 +381,9 @@ void transform(grid_layout<T> &initial_layout,
 
     // copy blocks to temporary send buffers
     // start = std::chrono::steady_clock::now();
+    PE(transformation_pack);
     send_data.copy_to_buffer();
+    PL();
     // end = std::chrono::steady_clock::now();
     // auto copy_to_buffer_duration =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
@@ -396,6 +399,7 @@ void transform(grid_layout<T> &initial_layout,
 #endif
     // start = std::chrono::steady_clock::now();
     // perform the communication
+    PE(transformation_all2all);
     MPI_Alltoallv(send_data.data(),
                   send_data.counts.data(),
                   send_data.dspls.data(),
@@ -405,6 +409,7 @@ void transform(grid_layout<T> &initial_layout,
                   recv_data.dspls.data(),
                   mpi_type_wrapper<T>::type(),
                   comm);
+    PL();
     // end = std::chrono::steady_clock::now();
     // auto comm_duration =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
@@ -421,7 +426,9 @@ void transform(grid_layout<T> &initial_layout,
 #endif
     // start = std::chrono::steady_clock::now();
     // copy blocks from a temporary buffer back to blocks
+    PE(transformation_unpack);
     recv_data.copy_from_buffer();
+    PL();
     // end = std::chrono::steady_clock::now();
     // auto copy_from_buffer_duration =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
