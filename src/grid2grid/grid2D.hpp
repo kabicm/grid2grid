@@ -75,11 +75,17 @@ class assigned_grid2D {
     void transpose();
 
   private:
-    std::vector<std::vector<int>> transpose(const std::vector<std::vector<int>>& v);
+    friend bool operator==(assigned_grid2D const &,
+                           assigned_grid2D const &) noexcept;
+
+    std::vector<std::vector<int>>
+    transpose(const std::vector<std::vector<int>> &v);
 
     grid2D g;
     std::vector<std::vector<int>> ranks;
     int n_ranks = 0;
 };
+
+bool operator==(assigned_grid2D const &, assigned_grid2D const &) noexcept;
 
 } // namespace grid2grid

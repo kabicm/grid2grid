@@ -3,10 +3,10 @@
 #include <grid2grid/interval.hpp>
 
 #include <algorithm>
-#include <iostream>
-#include <vector>
-#include <memory>
 #include <complex>
+#include <iostream>
+#include <memory>
+#include <vector>
 
 namespace grid2grid {
 
@@ -122,11 +122,24 @@ struct block {
 
     size_t total_size() const { return n_rows() * n_cols(); }
 
-    const T& local_element(int li, int lj) const;
-    T& local_element(int li, int lj);
+    const T &local_element(int li, int lj) const;
+    T &local_element(int li, int lj);
 
     void transpose_or_conjugate(char flag);
 };
+
+template <typename T>
+bool operator==(block<T> const &lhs, block<T> const &rhs) noexcept {
+    return lhs.rows_interval.start == rhs.rows_interval.start &&
+           lhs.rows_interval.end == rhs.rows_interval.end &&
+           lhs.cols_interval.start == rhs.cols_interval.start &&
+           lhs.cols_interval.end == rhs.cols_interval.end &&
+           lhs.coordinates.row == rhs.coordinates.row &&
+           lhs.coordinates.col == rhs.coordinates.col &&
+           lhs.stride == rhs.stride && lhs.data == rhs.data &&
+           lhs.transpose_on_copy == rhs.transpose_on_copy &&
+           lhs.conjugate_on_copy == rhs.conjugate_on_copy;
+}
 
 template <typename T>
 inline std::ostream &operator<<(std::ostream &os, const block<T> &other) {
@@ -151,9 +164,19 @@ class local_blocks {
     void transpose_or_conjugate(char flag);
 
   private:
+    template <typename T_>
+    friend bool operator==(local_blocks<T_> const &,
+                           local_blocks<T_> const &) noexcept;
+
     std::vector<block<T>> blocks;
     size_t total_size = 0;
 };
+
+template <typename T>
+bool operator==(local_blocks<T> const &lhs,
+                local_blocks<T> const &rhs) noexcept {
+    return lhs.blocks == rhs.blocks && lhs.total_size == rhs.total_size;
+}
 
 template <typename T>
 inline std::ostream &operator<<(std::ostream &os,

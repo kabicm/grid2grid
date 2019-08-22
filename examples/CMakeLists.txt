@@ -4,6 +4,9 @@
 add_executable(scalapack2scalapack scalapack2scalapack.cpp)
 target_link_libraries(scalapack2scalapack PRIVATE grid2grid options)
 
+add_executable(scalapack_submatrix scalapack_submatrix.cpp)
+target_link_libraries(scalapack_submatrix PRIVATE grid2grid)
+
 ################
 #  unit gtests #
 ################

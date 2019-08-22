@@ -25,4 +25,5 @@ class grid_layout {
     assigned_grid2D grid;
     local_blocks<T> blocks;
 };
+
 } // namespace grid2grid
