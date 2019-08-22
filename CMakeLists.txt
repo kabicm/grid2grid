@@ -26,7 +26,6 @@ find_package(OpenMP REQUIRED)
 add_subdirectory(src/grid2grid)
 
 if(GRID2GRID_WITH_PROFILING)
-    option(SEMIPROF_WITH_INSTALL "" ${GRID2GRID_WITH_INSTALL})
     add_subdirectory(libs/semiprof)
 endif()
 
