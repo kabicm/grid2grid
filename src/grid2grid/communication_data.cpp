@@ -81,8 +81,8 @@ void copy_block_to_buffer(block<T> b, T *dest_ptr) {
         // because block b will be transposed
         // in the buffer without any stride
         // (we make the buffer packed)
-        int dest_stride = b.n_cols();
-        memory::copy_and_transpose(b, dest_ptr, b.n_cols());
+        int dest_stride = b.n_rows();
+        memory::copy_and_transpose(b, dest_ptr, dest_stride);
         // b.stride = b.n_cols();
     }
 }
