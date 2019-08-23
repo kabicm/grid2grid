@@ -18,12 +18,13 @@
 #include <tuple>
 #include <utility>
 
-
 namespace grid2grid {
 // template <typename T>
 // grid_layout<T> get_scalapack_grid(scalapack::data_layout& layout,
 //                               T *ptr, int rank);
 
+// The following two definitions are the same with the exception of a const
+//
 template <typename T>
 grid_layout<T>
 get_scalapack_grid(int lld_m_dim,                  // local leading dim
@@ -52,6 +53,8 @@ get_scalapack_grid(int lld_m_dim,                  // local leading dim
                    const T *ptr,
                    const int rank);
 
+// There is not submatrix support here.
+//
 template <typename T>
 grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
                                   scalapack::block_dim b_dim,
@@ -60,6 +63,9 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
                                   T *ptr,
                                   int rank);
 
+// Provides a more conveninet wasy to pass arguments. There is no submatrix
+// support.
+//
 template <typename T>
 grid_layout<T>
 get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank);

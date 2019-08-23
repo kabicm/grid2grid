@@ -56,21 +56,6 @@ int rank_from_grid(rank_grid_coord grid_coord,
     }
 }
 
-int rank_from_grid(rank_grid_coord grid_coord,
-                   rank_decomposition grid_dim,
-                   ordering grid_ord,
-                   rank_grid_coord src) {
-    if (grid_coord.row < 0 || grid_coord.row >= grid_dim.row ||
-        grid_coord.col < 0 || grid_coord.col >= grid_dim.col) {
-        throw std::runtime_error(
-            "Error in rank_from_grid: rank coordinates do not belong \
-    to the rank grid.");
-    }
-
-    grid_coord = (grid_coord + grid_dim - src) % grid_dim;
-    return rank_from_grid(grid_coord, grid_dim, grid_ord);
-}
-
 std::tuple<int, int> local_coordinate(int glob_coord,
                                       int block_dimension,
                                       int p_block_dimension,

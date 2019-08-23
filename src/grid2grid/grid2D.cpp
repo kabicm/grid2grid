@@ -1,6 +1,13 @@
 #include <grid2grid/grid2D.hpp>
 
 namespace grid2grid {
+
+bool operator==(assigned_grid2D const &lhs,
+                assigned_grid2D const &rhs) noexcept {
+    return lhs.g.rows_split == rhs.g.rows_split &&
+           lhs.g.cols_split == rhs.g.cols_split && lhs.ranks == rhs.ranks;
+}
+
 /*
     A class describing a matrix n_rows x n_cols split into an arbitrary grid.
     A grid is defined by rows_split and cols_split. More precisely, a matrix is
@@ -81,7 +88,8 @@ int assigned_grid2D::block_size(int row_index, int col_index) {
            cols_interval(col_index).length();
 }
 
-std::vector<std::vector<int>> assigned_grid2D::transpose(const std::vector<std::vector<int>>& v) {
+std::vector<std::vector<int>>
+assigned_grid2D::transpose(const std::vector<std::vector<int>> &v) {
     int m = v.size();
     int n = v.size() == 0 ? 0 : v[0].size();
 
