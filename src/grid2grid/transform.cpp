@@ -1,6 +1,7 @@
 #include <grid2grid/transform.hpp>
 #include <grid2grid/profiler.hpp>
 #include <complex>
+#include <thread>
 
 namespace grid2grid {
 
@@ -322,6 +323,13 @@ void transform(grid_layout<T> &initial_layout,
     // total_start).count();
     communication_data<T> recv_data =
         prepare_to_recv(final_layout, initial_layout, rank);
+
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    // copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    std::thread local_copy(copy_local_blocks<T>, 
+                           std::ref(send_data.local_blocks),
+                           std::ref(recv_data.local_blocks));
     // auto end = std::chrono::steady_clock::now();
     // auto prepare_recv =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
@@ -376,10 +384,6 @@ void transform(grid_layout<T> &initial_layout,
     PE(transformation_unpack);
     recv_data.copy_from_buffer();
     PL();
-
-    // copy local data (that are on the same rank in both initial and final layout)
-    // this is independent of MPI and can be executed in parallel
-    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
     // end = std::chrono::steady_clock::now();
     // auto copy_from_buffer_duration =
     // std::chrono::duration_cast<std::chrono::milliseconds>(end -
@@ -397,6 +401,7 @@ void transform(grid_layout<T> &initial_layout,
     //     copy_from_buffer_duration << std::endl; std::cout << "total: " <<
     //     total_duration << std::endl;
     // }
+    local_copy.join();
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,
