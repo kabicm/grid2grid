@@ -43,6 +43,7 @@ class communication_data {
     int n_ranks = 0;
     int total_size = 0;
     int my_rank;
+    int n_packed_messages = 0;
 
     communication_data() = default;
 

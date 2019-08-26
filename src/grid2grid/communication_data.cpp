@@ -67,6 +67,13 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
     for (unsigned i = 1; i < (unsigned)n_ranks; ++i) {
         dspls[i] = dspls[i - 1] + counts[i - 1];
     }
+
+    n_packed_messages = 0;
+    for (unsigned i = 0; i < (unsigned) n_ranks; ++i) {
+        if (counts[i]) {
+            ++n_packed_messages;
+        }
+    }
 }
 
 template <typename T>
