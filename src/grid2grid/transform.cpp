@@ -67,6 +67,7 @@ void merge_messages(std::vector<message<T>> &messages) {
 template <typename T>
 std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
                                          const grid_layout<T> &final_layout) {
+    PE(transform_decompose);
     grid_cover g_overlap(init_layout.grid.grid(), final_layout.grid.grid());
 
     std::vector<message<T>> messages;
@@ -81,6 +82,7 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
     merge_messages(messages);
+    PL();
     return messages;
 }
 
@@ -355,8 +357,9 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
 
 template <typename T>
 void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
-    MPI_Request recv_reqs[recv_data.n_packed_messages];
 
+    PE(transform_irecv);
+    MPI_Request recv_reqs[recv_data.n_packed_messages];
     int request_idx = 0;
     // initiate all receives
     for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
@@ -369,10 +372,14 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    PL();
 
+    PE(transform_packing);
     // copy blocks to temporary send buffers
     send_data.copy_to_buffer();
+    PL();
 
+    PE(transform_isend);
     MPI_Request send_reqs[send_data.n_packed_messages];
     request_idx = 0;
     // initiate all sends
@@ -386,24 +393,33 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    PL();
 
     // wait for any package and immediately unpack it
     for (unsigned i = 0u; i < recv_data.n_packed_messages; ++i) {
         int idx;
+        PE(transform_waitany);
         MPI_Waitany(recv_data.n_packed_messages,
                     recv_reqs,
                     &idx,
                     MPI_STATUS_IGNORE);
+        PL();
+        PE(transform_unpacking);
         // unpack the package that arrived
         recv_data.copy_from_buffer(idx);
+        PL();
     }
 
+    PE(transform_localblocks);
     // copy local data (that are on the same rank in both initial and final layout)
     // this is independent of MPI and can be executed in parallel
     copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    PL();
 
+    PE(transform_waitall);
     // finish up the send requests since all the receive requests are finished
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    PL();
 }
 
 template <typename T>
@@ -430,10 +446,7 @@ void transform(grid_layout<T> &initial_layout,
 #endif
 
     // perform the communication
-    PE(transformation_exchange);
     exchange_async(send_data, recv_data, comm);
-    PL();
-
 #ifdef DEBUG
     std::cout << "recv buffer content: " << std::endl;
     for (int i = 0; i < recv_data.total_size; ++i) {

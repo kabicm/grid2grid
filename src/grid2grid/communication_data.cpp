@@ -1,4 +1,5 @@
 #include <grid2grid/communication_data.hpp>
+#include <grid2grid/profiler.hpp>
 
 #include <complex>
 
@@ -52,6 +53,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
                                           int rank, int n_ranks)
     : n_ranks(n_ranks)
     , my_rank(rank) {
+    PE(transform_commdata);
     // std::cout << "constructor of communciation data invoked" << std::endl;
     dspls = std::vector<int>(n_ranks);
     counts = std::vector<int>(n_ranks);
@@ -95,6 +97,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
     }
 
     partition_messages();
+    PL();
 }
 
 template <typename T>
