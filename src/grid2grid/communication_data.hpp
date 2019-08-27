@@ -51,11 +51,17 @@ class communication_data {
 
     void copy_to_buffer();
 
+    // copy all mpi_messages from buffer
     void copy_from_buffer();
+    // copy mpi_messages[idx] from buffer
+    void copy_from_buffer(int idx);
 
     T *data();
 
+    void partition_messages();
+
   private:
+    std::vector<int> package_ticks;
     std::vector<int> offset_per_message;
 };
 

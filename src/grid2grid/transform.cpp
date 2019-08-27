@@ -308,10 +308,7 @@ get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank) {
 
 template <typename T>
 void exchange(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
-    int send_count = 0;
-
-    int n_messages = send_data.n_packed_messages + recv_data.n_packed_messages;
-    MPI_Request reqs[n_messages];
+    MPI_Request recv_reqs[recv_data.n_packed_messages];
 
     int request_idx = 0;
     // initiate all receives
@@ -321,11 +318,62 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
                       recv_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
-                      &reqs[request_idx]);
+                      &recv_reqs[request_idx]);
             ++request_idx;
         }
     }
 
+    // copy blocks to temporary send buffers
+    send_data.copy_to_buffer();
+
+    request_idx = 0;
+    MPI_Request send_reqs[send_data.n_packed_messages];
+    // initiate all sends
+    for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
+        if (send_data.counts[i]) {
+            MPI_Isend(send_data.data() + send_data.dspls[i], 
+                      send_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &send_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+
+    MPI_Waitall(recv_data.n_packed_messages, recv_reqs, MPI_STATUSES_IGNORE);
+
+    // copy the received data back to the final layout
+    recv_data.copy_from_buffer();
+
+    // finish up the pending send requests
+    MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+}
+
+template <typename T>
+void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
+    MPI_Request recv_reqs[recv_data.n_packed_messages];
+
+    int request_idx = 0;
+    // initiate all receives
+    for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
+        if (recv_data.counts[i]) {
+            MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+                      recv_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &recv_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+
+    // copy blocks to temporary send buffers
+    send_data.copy_to_buffer();
+
+    MPI_Request send_reqs[send_data.n_packed_messages];
     request_idx = 0;
     // initiate all sends
     for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
@@ -334,12 +382,28 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
                       send_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
-                      &reqs[recv_data.n_packed_messages + request_idx]);
+                      &send_reqs[request_idx]);
             ++request_idx;
         }
     }
 
-    MPI_Waitall(n_messages, reqs, MPI_STATUSES_IGNORE);
+    // wait for any package and immediately unpack it
+    for (unsigned i = 0u; i < recv_data.n_packed_messages; ++i) {
+        int idx;
+        MPI_Waitany(recv_data.n_packed_messages,
+                    recv_reqs,
+                    &idx,
+                    MPI_STATUS_IGNORE);
+        // unpack the package that arrived
+        recv_data.copy_from_buffer(idx);
+    }
+
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+
+    // finish up the send requests since all the receive requests are finished
+    MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
 }
 
 template <typename T>
@@ -355,15 +419,6 @@ void transform(grid_layout<T> &initial_layout,
     communication_data<T> recv_data =
         prepare_to_recv(final_layout, initial_layout, rank);
 
-    // std::thread local_copy(copy_local_blocks<T>, 
-    //                        std::ref(send_data.local_blocks),
-    //                        std::ref(recv_data.local_blocks));
-
-    // copy blocks to temporary send buffers
-    // start = std::chrono::steady_clock::now();
-    PE(transformation_pack);
-    send_data.copy_to_buffer();
-    PL();
 #ifdef DEBUG
     std::cout << "send buffer content: " << std::endl;
     for (int i = 0; i < send_data.total_size; ++i) {
@@ -376,22 +431,8 @@ void transform(grid_layout<T> &initial_layout,
 
     // perform the communication
     PE(transformation_exchange);
-    exchange(send_data, recv_data, comm);
-
-    // MPI_Alltoallv(send_data.data(),
-    //               send_data.counts.data(),
-    //               send_data.dspls.data(),
-    //               mpi_type_wrapper<T>::type(),
-    //               recv_data.data(),
-    //               recv_data.counts.data(),
-    //               recv_data.dspls.data(),
-    //               mpi_type_wrapper<T>::type(),
-    //               comm);
+    exchange_async(send_data, recv_data, comm);
     PL();
-
-    // copy local data (that are on the same rank in both initial and final layout)
-    // this is independent of MPI and can be executed in parallel
-    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
 
 #ifdef DEBUG
     std::cout << "recv buffer content: " << std::endl;
@@ -402,12 +443,6 @@ void transform(grid_layout<T> &initial_layout,
     }
     std::cout << std::endl;
 #endif
-    // copy blocks from a temporary buffer back to blocks
-    PE(transformation_unpack);
-    recv_data.copy_from_buffer();
-    PL();
-
-    // local_copy.join();
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,
