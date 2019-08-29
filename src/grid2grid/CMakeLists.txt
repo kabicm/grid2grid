@@ -14,7 +14,10 @@ target_link_libraries(grid2grid PUBLIC OpenMP::OpenMP_CXX MPI::MPI_CXX)
 
 if(GRID2GRID_WITH_PROFILING)
     target_link_libraries(grid2grid PRIVATE 
-    $<BUILD_INTERFACE:semiprof>
+        $<BUILD_INTERFACE:semiprof>
+    )
+    target_compile_definitions(grid2grid PRIVATE 
+        $<BUILD_INTERFACE:GRID2GRID_WITH_PROFILING>
     )
 endif()
 
