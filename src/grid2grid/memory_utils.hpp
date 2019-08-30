@@ -47,7 +47,7 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
         copy(block_size, src_ptr, dest_ptr);
     } else {
         // if strided, copy column-by-column
-        for (unsigned col = 0; col < dim.second; ++col) {
+        for (size_t col = 0; col < dim.second; ++col) {
             copy(dim.first,
                  src_ptr + ld_src * col,
                  dest_ptr + ld_dest * col);

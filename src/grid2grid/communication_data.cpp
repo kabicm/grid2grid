@@ -128,7 +128,7 @@ template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -139,9 +139,21 @@ void communication_data<T>::copy_to_buffer() {
 }
 
 template <typename T>
+void communication_data<T>::copy_to_buffer(int idx) {
+    assert(idx >= 0 && idx+1 < package_ticks.size());
+#pragma omp parallel for schedule(dynamic, 1)
+    for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+        const auto &m = mpi_messages[i];
+        block<T> b = m.get_block();
+        int target_rank = m.get_rank();
+        copy_block_to_buffer(b, data() + offset_per_message[i]);
+    }
+}
+
+template <typename T>
 void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -152,7 +164,7 @@ void communication_data<T>::copy_from_buffer(int idx) {
 
 template <typename T>
 void communication_data<T>::copy_from_buffer() {
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -180,7 +192,7 @@ void copy_block_to_block(block<T>& src, block<T>& dest) {
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
-// #pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
         auto& block_dest = to[i];

@@ -2,6 +2,7 @@
 #include <grid2grid/profiler.hpp>
 #include <complex>
 #include <thread>
+#include <unordered_map>
 
 namespace grid2grid {
 
@@ -59,9 +60,95 @@ std::vector<message<T>> decompose_block(const block<T> &b,
     return decomposed_blocks;
 }
 
+std::unordered_map<int, int> rank_to_comm_vol_for_block(const assigned_grid2D& g_init,
+                                                        const block_coordinates &b_coord,
+                                                        grid_cover &g_cover,
+                                                        const assigned_grid2D& g_final) {
+    // std::cout << "decomposing block " << b << std::endl;
+    block_cover b_cover = g_cover.decompose_block(b_coord);
+
+    int row_first = b_cover.rows_cover.start_index;
+    int row_last = b_cover.rows_cover.end_index;
+
+    int col_first = b_cover.cols_cover.start_index;
+    int col_last = b_cover.cols_cover.end_index;
+
+    auto rows_interval = g_init.rows_interval(b_coord.row);
+    auto cols_interval = g_init.cols_interval(b_coord.col);
+
+    std::unordered_map<int, int> comm_vol;
+
+    int row_start = rows_interval.start;
+    // use start of the interval to get the rank and the end of the interval
+    // to get the block which has to be sent
+    // skip the last element
+    for (int i = row_first; i < row_last; ++i) {
+        int row_end = std::min(g_final.grid().rows_split[i + 1], rows_interval.end);
+
+        int col_start = cols_interval.start;
+        for (int j = col_first; j < col_last; ++j) {
+            // use i, j to find out the rank
+            int rank = g_final.owner(i, j);
+            // std::cout << "owner of block " << i << ", " << j << " is " <<
+            // rank << std::endl;
+
+            // use i+1 and j+1 to find out the block
+            int col_end =
+                std::min(g_final.grid().cols_split[j + 1], cols_interval.end);
+
+            int size = (row_end - row_start) * (col_end - col_start);
+            // if non empty, add this block
+            if (size) {
+                comm_vol[rank] += size;
+            }
+
+            col_start = col_end;
+        }
+        row_start = row_end;
+    }
+    return comm_vol;
+}
+
 template <typename T>
 void merge_messages(std::vector<message<T>> &messages) {
     std::sort(messages.begin(), messages.end());
+}
+
+template <typename T>
+std::unordered_map<edge, weight> communication_volume(grid_layout<T>& initial_layout,
+                                       grid_layout<T>& final_layout) {
+
+    auto g_init = initial_layout.grid;
+    auto g_final = final_layout.grid;
+    grid_cover g_cover(g_init.grid(), g_final.grid());
+
+    int n_blocks_row = g_init.grid().n_rows;
+    int n_blocks_col = g_init.grid().n_cols;
+
+    std::unordered_map<edge, int> weights;
+
+    for (int i = 0; i < n_blocks_row; ++i) {
+        for (int j = 0; j < n_blocks_col; ++j) {
+            auto rank_to_comm_vol = rank_to_comm_vol_for_block(
+                g_init, block_coordinates{i, j}, g_cover, g_final);
+            int rank = g_init.owner(i, j);
+
+            for (const auto& comm_vol : rank_to_comm_vol) {
+                int target_rank = comm_vol.first;
+                int weight = comm_vol.second;
+
+                int smaller_rank = std::min(rank, target_rank);
+                int larger_rank = std::max(rank, target_rank);
+
+                edge edge_between_ranks =
+                    {smaller_rank, larger_rank};
+
+                weights[edge_between_ranks] += weight;
+            }
+        }
+    }
+
+    return weights;
 }
 
 template <typename T>
@@ -395,6 +482,13 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
     }
     PL();
 
+    PE(transform_localblocks);
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    PL();
+
+
     // wait for any package and immediately unpack it
     for (unsigned i = 0u; i < recv_data.n_packed_messages; ++i) {
         int idx;
@@ -410,17 +504,17 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
         PL();
     }
 
-    PE(transform_localblocks);
-    // copy local data (that are on the same rank in both initial and final layout)
-    // this is independent of MPI and can be executed in parallel
-    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
-    PL();
-
     PE(transform_waitall);
     // finish up the send requests since all the receive requests are finished
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
     PL();
 }
+
+// std::vector<int> reorder_ranks(grid_layout<T>& initial_layout,
+//                                grid_layout<T>& final_layout) {
+// 
+// 
+// }
 
 template <typename T>
 void transform(grid_layout<T> &initial_layout,
@@ -434,6 +528,14 @@ void transform(grid_layout<T> &initial_layout,
 
     communication_data<T> recv_data =
         prepare_to_recv(final_layout, initial_layout, rank);
+
+    auto comm_volume = communication_volume(initial_layout, final_layout);
+
+    if (rank == 0) {
+        for (const auto& edge : comm_volume) {
+            std::cout << edge.src() << "->" << edge.dest() << " = " << edge.weight() << std::endl;
+        }
+    }
 
 #ifdef DEBUG
     std::cout << "send buffer content: " << std::endl;

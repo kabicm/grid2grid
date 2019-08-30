@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <tuple>
 #include <utility>
+#include <comm_volume.hpp>
 
 namespace grid2grid {
 // template <typename T>
@@ -74,5 +75,8 @@ template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm);
+
+
+
 
 } // namespace grid2grid

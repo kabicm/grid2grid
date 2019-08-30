@@ -49,11 +49,18 @@ class communication_data {
 
     communication_data(std::vector<message<T>> &msgs, int my_rank, int n_ranks);
 
+    // copy all mpi_messages to buffer
     void copy_to_buffer();
+    // copy mpi_messages within the idx-th package
+    // a package includes all mpi_messages
+    // to be sent to the same rank
+    void copy_to_buffer(int idx);
 
     // copy all mpi_messages from buffer
     void copy_from_buffer();
-    // copy mpi_messages[idx] from buffer
+    // copy mpi_messages within the idx-th package
+    // a package includes all mpi_messages
+    // received from the same rank
     void copy_from_buffer(int idx);
 
     T *data();
