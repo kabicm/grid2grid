@@ -22,8 +22,22 @@ class grid_layout {
         }
     }
 
+    void reorder_ranks(std::vector<int>& reordering) {
+        grid.reorder_ranks(reordering);
+        ranks_reordered_ = true;
+    }
+
+    int reordered_rank(int rank) const {
+        return grid.reordered_rank(rank);
+    }
+
+    bool ranks_reordered() {
+        return ranks_reordered_;
+    }
+
     assigned_grid2D grid;
     local_blocks<T> blocks;
+    bool ranks_reordered_ = false;
 };
 
 } // namespace grid2grid

@@ -115,8 +115,8 @@ void merge_messages(std::vector<message<T>> &messages) {
 }
 
 template <typename T>
-std::unordered_map<edge, weight> communication_volume(grid_layout<T>& initial_layout,
-                                       grid_layout<T>& final_layout) {
+comm_volume communication_volume(grid_layout<T>& initial_layout,
+                                 grid_layout<T>& final_layout) {
 
     auto g_init = initial_layout.grid;
     auto g_final = final_layout.grid;
@@ -125,7 +125,7 @@ std::unordered_map<edge, weight> communication_volume(grid_layout<T>& initial_la
     int n_blocks_row = g_init.grid().n_rows;
     int n_blocks_col = g_init.grid().n_cols;
 
-    std::unordered_map<edge, int> weights;
+    std::unordered_map<edge_t, int> weights;
 
     for (int i = 0; i < n_blocks_row; ++i) {
         for (int j = 0; j < n_blocks_col; ++j) {
@@ -140,7 +140,7 @@ std::unordered_map<edge, weight> communication_volume(grid_layout<T>& initial_la
                 int smaller_rank = std::min(rank, target_rank);
                 int larger_rank = std::max(rank, target_rank);
 
-                edge edge_between_ranks =
+                edge_t edge_between_ranks =
                     {smaller_rank, larger_rank};
 
                 weights[edge_between_ranks] += weight;
@@ -148,7 +148,7 @@ std::unordered_map<edge, weight> communication_volume(grid_layout<T>& initial_la
         }
     }
 
-    return weights;
+    return comm_volume(std::move(weights));
 }
 
 template <typename T>
@@ -177,6 +177,9 @@ template <typename T>
 communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
                                       const grid_layout<T> &final_layout,
                                       int rank) {
+    // in case ranks were reordered to minimize the communication
+    // this might not be the identity function
+    rank = init_layout.reordered_rank(rank);
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
     return communication_data<T>(messages, rank, final_layout.num_ranks());
@@ -186,6 +189,9 @@ template <typename T>
 communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
                                       const grid_layout<T> &init_layout,
                                       int rank) {
+    // in case ranks were reordered to minimize the communication
+    // this might not be the identity function
+    rank = final_layout.reordered_rank(rank);
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
     return communication_data<T>(messages, rank, init_layout.num_ranks());
@@ -529,13 +535,13 @@ void transform(grid_layout<T> &initial_layout,
     communication_data<T> recv_data =
         prepare_to_recv(final_layout, initial_layout, rank);
 
-    auto comm_volume = communication_volume(initial_layout, final_layout);
+    // auto comm_volume = communication_volume(initial_layout, final_layout);
 
-    if (rank == 0) {
-        for (const auto& edge : comm_volume) {
-            std::cout << edge.src() << "->" << edge.dest() << " = " << edge.weight() << std::endl;
-        }
-    }
+    // if (rank == 0) {
+    //     for (const auto& edge : comm_volume) {
+    //         std::cout << edge.src() << "->" << edge.dest() << " = " << edge.weight() << std::endl;
+    //     }
+    // }
 
 #ifdef DEBUG
     std::cout << "send buffer content: " << std::endl;
@@ -730,4 +736,19 @@ get_scalapack_grid(scalapack::data_layout &layout,
                    std::complex<double> *ptr,
                    int rank);
 
+// template instantiation of communication_volume
+template
+comm_volume communication_volume(grid_layout<float>& initial_layout,
+                                 grid_layout<float>& final_layout);
+template
+comm_volume communication_volume(grid_layout<double>& initial_layout,
+                                 grid_layout<double>& final_layout);
+template
+comm_volume communication_volume(
+        grid_layout<std::complex<float>>& initial_layout,
+        grid_layout<std::complex<float>>& final_layout);
+template
+comm_volume communication_volume(
+        grid_layout<std::complex<double>>& initial_layout,
+        grid_layout<std::complex<double>>& final_layout);
 } // namespace grid2grid

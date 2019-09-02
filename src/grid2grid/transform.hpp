@@ -8,6 +8,7 @@
 #include <grid2grid/interval.hpp>
 #include <grid2grid/memory_utils.hpp>
 #include <grid2grid/scalapack_layout.hpp>
+#include <grid2grid/comm_volume.hpp>
 
 #include <algorithm>
 #include <assert.h>
@@ -17,7 +18,6 @@
 #include <stdexcept>
 #include <tuple>
 #include <utility>
-#include <comm_volume.hpp>
 
 namespace grid2grid {
 // template <typename T>
@@ -75,6 +75,10 @@ template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm);
+
+template <typename T>
+comm_volume communication_volume(grid_layout<T>& initial_layout,
+                                 grid_layout<T>& final_layout);
 
 
 

@@ -74,6 +74,10 @@ class assigned_grid2D {
     // if flag='C' => transpose and conjugate
     void transpose();
 
+    void reorder_ranks(std::vector<int>& reordering);
+
+    int reordered_rank(int rank) const;
+
   private:
     friend bool operator==(assigned_grid2D const &,
                            assigned_grid2D const &) noexcept;
@@ -84,6 +88,9 @@ class assigned_grid2D {
     grid2D g;
     std::vector<std::vector<int>> ranks;
     int n_ranks = 0;
+
+    std::vector<int> ranks_reordering;
+    bool ranks_reordered = false;
 };
 
 bool operator==(assigned_grid2D const &, assigned_grid2D const &) noexcept;
