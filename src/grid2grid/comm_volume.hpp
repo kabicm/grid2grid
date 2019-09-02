@@ -50,10 +50,6 @@ struct weighted_edge_t {
     weighted_edge_t() = default;
     weighted_edge_t(int src, int dest, int weight):
         e{src, dest}, w(weight) {}
-    weighted_edge_t(edge_t& e, int weight):
-        e(e), w(weight) {}
-    weighted_edge_t(weighted_edge_t& we):
-        e(we.e), w(we.w) {}
 
     const int weight() const {
         return w;

@@ -4,6 +4,7 @@ add_library(grid2grid STATIC block.cpp
                              scalapack_layout.cpp
                              communication_data.cpp
                              grid_cover.cpp
+                             ranks_reordering.hpp
                              transform.cpp)
 
 target_include_directories(grid2grid PUBLIC

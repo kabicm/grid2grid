@@ -15,7 +15,7 @@ std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
     }
 
     std::vector<weighted_edge_t> sorted_edges;
-    sorted_edges.reserve(comm_volume.size());
+    sorted_edges.reserve(comm_volume.volume.size());
     for (const auto& el : comm_volume.volume) {
         auto& e = el.first;
         int w = el.second;
@@ -29,22 +29,22 @@ std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
 
     for (const auto& edge : sorted_edges) {
         // edge: src->dest with weight w
-        if (visited.find(edge.src) != visited.end()) {
+        if (visited.find(edge.src()) != visited.end()) {
             continue;
         }
-        if (visited.find(edge.dest) != visited.end()) {
+        if (visited.find(edge.dest()) != visited.end()) {
             continue;
         }
 
         // map src -> dest
         // take this edge to perfect matching
-        permutation[edge.src] = edge.dest;
+        permutation[edge.src()] = edge.dest();
 
         // no adjecent edge to these vertices
         // can be taken in the future
         // to preserve the perfect matching
-        visited.insert(edge.src);
-        visited.insert(edge.dest);
+        visited.insert(edge.src());
+        visited.insert(edge.dest());
     }
 
     return permutation;
