@@ -1,4 +1,4 @@
-
+#pragma once
 #include <unordered_map>
 
 namespace grid2grid {
@@ -48,6 +48,8 @@ struct weighted_edge_t {
     int w;
 
     weighted_edge_t() = default;
+    weighted_edge_t(int src, int dest, int weight):
+        e{src, dest}, w(weight) {}
     weighted_edge_t(edge_t& e, int weight):
         e(e), w(weight) {}
     weighted_edge_t(weighted_edge_t& we):
@@ -71,6 +73,10 @@ struct weighted_edge_t {
 
     bool operator==(const weighted_edge_t& other) const {
         return e==other.edge() && w == other.weight();
+    }
+
+    bool operator<(const weighted_edge_t& other) const {
+        return w < other.w;
     }
 };
 
