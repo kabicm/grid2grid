@@ -103,12 +103,12 @@ struct comm_volume {
         for (const auto& vol : volume) {
             auto& e = vol.first;
             auto w = vol.second;
-            sum_comm_vol[e.sorted] += w;
+            sum_comm_vol[e.sorted()] += w;
         }
         for (const auto& vol : other.volume) {
             auto& e = vol.first;
             auto w = vol.second;
-            sum_comm_vol[e.sorted] += w;
+            sum_comm_vol[e.sorted()] += w;
         }
         return sum_comm_vol;
     }
