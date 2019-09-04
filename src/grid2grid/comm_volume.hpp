@@ -11,6 +11,11 @@ struct edge_t {
         src(src), dest(dest) {}
     // edge_t(edge_t& e): src(e.src), dest(e.dest) {}
 
+    edge_t sorted() const {
+        int u = std::min(src, dest);
+        int v = std::max(src, dest);
+        return edge_t{u, v};
+    }
     bool operator==(const edge_t& other) const {
         return src==other.src && dest==other.dest;
     }
@@ -88,7 +93,7 @@ struct comm_volume {
         for (const auto& vol : other.volume) {
             auto& e = vol.first;
             int w = vol.second;
-            volume[e] += w;
+            volume[e.sorted()] += w;
         }
         return *this;
     }
@@ -98,12 +103,12 @@ struct comm_volume {
         for (const auto& vol : volume) {
             auto& e = vol.first;
             auto w = vol.second;
-            sum_comm_vol[e] += w;
+            sum_comm_vol[e.sorted] += w;
         }
         for (const auto& vol : other.volume) {
             auto& e = vol.first;
             auto w = vol.second;
-            sum_comm_vol[e] += w;
+            sum_comm_vol[e.sorted] += w;
         }
         return sum_comm_vol;
     }

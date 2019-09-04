@@ -39,6 +39,7 @@ std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
         // map src -> dest
         // take this edge to perfect matching
         permutation[edge.src()] = edge.dest();
+        permutation[edge.dest()] = edge.src();
 
         // no adjecent edge to these vertices
         // can be taken in the future
