@@ -76,11 +76,6 @@ void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm);
 
-template <typename T>
-comm_volume communication_volume(grid_layout<T>& initial_layout,
-                                 grid_layout<T>& final_layout);
-
-
-
-
+comm_volume communication_volume(assigned_grid2D& initial_grid,
+                                 assigned_grid2D& final_grid);
 } // namespace grid2grid

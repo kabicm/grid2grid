@@ -197,6 +197,7 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
         auto& block_src = from[i];
         auto& block_dest = to[i];
         assert(block_src.non_empty());
+        assert(block_dest.non_empty());
         assert(block_src.total_size() == block_dest.total_size());
         // destination block cannot be transposed
         assert(!block_dest.transpose_on_copy);

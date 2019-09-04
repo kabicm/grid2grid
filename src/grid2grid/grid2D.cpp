@@ -115,8 +115,8 @@ void assigned_grid2D::reorder_ranks(std::vector<int>& reordering) {
 }
 
 int assigned_grid2D::reordered_rank(int rank) const {
-    assert(rank < std::max(ranks_reordering.size(), n_ranks));
-    if (ranks_reordered) 
+    assert(rank < std::max((int) ranks_reordering.size(), n_ranks));
+    if (ranks_reordered)
         return ranks_reordering[rank];
     else
         return rank;
