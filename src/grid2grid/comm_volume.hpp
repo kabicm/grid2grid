@@ -112,6 +112,16 @@ struct comm_volume {
         }
         return sum_comm_vol;
     }
+
+    int total_volume() {
+        int sum = 0;
+        for (const auto& vol : volume) {
+            auto& e = vol.first;
+            int w = vol.second;
+            sum += w;
+        }
+        return sum;
+    }
 };
 }
 
