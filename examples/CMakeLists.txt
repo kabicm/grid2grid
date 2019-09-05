@@ -10,6 +10,9 @@ target_link_libraries(scalapack_submatrix PRIVATE grid2grid)
 add_executable(parallel_scalapack_submatrix parallel_scalapack_submatrix.cpp)
 target_link_libraries(parallel_scalapack_submatrix PRIVATE grid2grid)
 
+add_executable(transform_test transform_test.cpp)
+target_link_libraries(transform_test PRIVATE grid2grid)
+
 ################
 #  unit gtests #
 ################
