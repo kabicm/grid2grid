@@ -1,6 +1,7 @@
 #include <grid2grid/transform.hpp>
 #include <grid2grid/profiler.hpp>
 #include <complex>
+#include <thread>
 
 namespace grid2grid {
 
@@ -66,6 +67,7 @@ void merge_messages(std::vector<message<T>> &messages) {
 template <typename T>
 std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
                                          const grid_layout<T> &final_layout) {
+    PE(transform_decompose);
     grid_cover g_overlap(init_layout.grid.grid(), final_layout.grid.grid());
 
     std::vector<message<T>> messages;
@@ -80,23 +82,26 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
     merge_messages(messages);
+    PL();
     return messages;
 }
 
 template <typename T>
 communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
-                                      const grid_layout<T> &final_layout) {
+                                      const grid_layout<T> &final_layout,
+                                      int rank) {
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
-    return communication_data<T>(std::move(messages), final_layout.num_ranks());
+    return communication_data<T>(messages, rank, final_layout.num_ranks());
 }
 
 template <typename T>
 communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
-                                      const grid_layout<T> &init_layout) {
+                                      const grid_layout<T> &init_layout,
+                                      int rank) {
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
-    return communication_data<T>(std::move(messages), init_layout.num_ranks());
+    return communication_data<T>(messages, rank, init_layout.num_ranks());
 }
 
 inline std::vector<int> line_split(int begin, int end, int blk_len) {
@@ -304,35 +309,132 @@ get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank) {
 }
 
 template <typename T>
+void exchange(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
+    MPI_Request recv_reqs[recv_data.n_packed_messages];
+
+    int request_idx = 0;
+    // initiate all receives
+    for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
+        if (recv_data.counts[i]) {
+            MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+                      recv_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &recv_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+
+    // copy blocks to temporary send buffers
+    send_data.copy_to_buffer();
+
+    request_idx = 0;
+    MPI_Request send_reqs[send_data.n_packed_messages];
+    // initiate all sends
+    for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
+        if (send_data.counts[i]) {
+            MPI_Isend(send_data.data() + send_data.dspls[i], 
+                      send_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &send_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+
+    MPI_Waitall(recv_data.n_packed_messages, recv_reqs, MPI_STATUSES_IGNORE);
+
+    // copy the received data back to the final layout
+    recv_data.copy_from_buffer();
+
+    // finish up the pending send requests
+    MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+}
+
+template <typename T>
+void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
+
+    PE(transform_irecv);
+    MPI_Request recv_reqs[recv_data.n_packed_messages];
+    int request_idx = 0;
+    // initiate all receives
+    for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
+        if (recv_data.counts[i]) {
+            MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+                      recv_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &recv_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+    PL();
+
+    PE(transform_packing);
+    // copy blocks to temporary send buffers
+    send_data.copy_to_buffer();
+    PL();
+
+    PE(transform_isend);
+    MPI_Request send_reqs[send_data.n_packed_messages];
+    request_idx = 0;
+    // initiate all sends
+    for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
+        if (send_data.counts[i]) {
+            MPI_Isend(send_data.data() + send_data.dspls[i], 
+                      send_data.counts[i],
+                      mpi_type_wrapper<T>::type(),
+                      i, 0, comm,
+                      &send_reqs[request_idx]);
+            ++request_idx;
+        }
+    }
+    PL();
+
+    // wait for any package and immediately unpack it
+    for (unsigned i = 0u; i < recv_data.n_packed_messages; ++i) {
+        int idx;
+        PE(transform_waitany);
+        MPI_Waitany(recv_data.n_packed_messages,
+                    recv_reqs,
+                    &idx,
+                    MPI_STATUS_IGNORE);
+        PL();
+        PE(transform_unpacking);
+        // unpack the package that arrived
+        recv_data.copy_from_buffer(idx);
+        PL();
+    }
+
+    PE(transform_localblocks);
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    PL();
+
+    PE(transform_waitall);
+    // finish up the send requests since all the receive requests are finished
+    MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    PL();
+}
+
+template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm) {
-    // MPI_Barrier(comm);
-    // auto total_start = std::chrono::steady_clock::now();
-    communication_data<T> send_data =
-        prepare_to_send(initial_layout, final_layout);
-    // auto start = std::chrono::steady_clock::now();
-    // auto prepare_send =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(start -
-    // total_start).count();
-    communication_data<T> recv_data =
-        prepare_to_recv(final_layout, initial_layout);
-    // auto end = std::chrono::steady_clock::now();
-    // auto prepare_recv =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(end -
-    // start).count();
     int rank;
     MPI_Comm_rank(comm, &rank);
 
-    // copy blocks to temporary send buffers
-    // start = std::chrono::steady_clock::now();
-    PE(transformation_pack);
-    send_data.copy_to_buffer();
-    PL();
-    // end = std::chrono::steady_clock::now();
-    // auto copy_to_buffer_duration =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(end -
-    // start).count();
+    communication_data<T> send_data =
+        prepare_to_send(initial_layout, final_layout, rank);
+
+    communication_data<T> recv_data =
+        prepare_to_recv(final_layout, initial_layout, rank);
+
 #ifdef DEBUG
     std::cout << "send buffer content: " << std::endl;
     for (int i = 0; i < send_data.total_size; ++i) {
@@ -342,24 +444,9 @@ void transform(grid_layout<T> &initial_layout,
     }
     std::cout << std::endl;
 #endif
-    // start = std::chrono::steady_clock::now();
-    // perform the communication
-    PE(transformation_all2all);
-    MPI_Alltoallv(send_data.data(),
-                  send_data.counts.data(),
-                  send_data.dspls.data(),
-                  mpi_type_wrapper<T>::type(),
-                  recv_data.data(),
-                  recv_data.counts.data(),
-                  recv_data.dspls.data(),
-                  mpi_type_wrapper<T>::type(),
-                  comm);
-    PL();
-    // end = std::chrono::steady_clock::now();
-    // auto comm_duration =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(end -
-    // start).count();
 
+    // perform the communication
+    exchange_async(send_data, recv_data, comm);
 #ifdef DEBUG
     std::cout << "recv buffer content: " << std::endl;
     for (int i = 0; i < recv_data.total_size; ++i) {
@@ -369,28 +456,6 @@ void transform(grid_layout<T> &initial_layout,
     }
     std::cout << std::endl;
 #endif
-    // start = std::chrono::steady_clock::now();
-    // copy blocks from a temporary buffer back to blocks
-    PE(transformation_unpack);
-    recv_data.copy_from_buffer();
-    PL();
-    // end = std::chrono::steady_clock::now();
-    // auto copy_from_buffer_duration =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(end -
-    // start).count();
-
-    // auto total_end = std::chrono::steady_clock::now();
-    // auto total_duration =
-    // std::chrono::duration_cast<std::chrono::milliseconds>(total_end -
-    // total_start).count(); if (rank == 0) {
-    //     std::cout << "prepare send: " << prepare_send << std::endl;
-    //     std::cout << "prepare recv: " << prepare_recv << std::endl;
-    //     std::cout << "copy: blocks -> buffer: " << copy_to_buffer_duration <<
-    //     std::endl; std::cout << "communication: : " << comm_duration <<
-    //     std::endl; std::cout << "copy: buffer -> blocks: " <<
-    //     copy_from_buffer_duration << std::endl; std::cout << "total: " <<
-    //     total_duration << std::endl;
-    // }
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,
