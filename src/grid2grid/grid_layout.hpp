@@ -31,7 +31,7 @@ class grid_layout {
     }
 
     bool ranks_reordered() {
-        return grid.ranks_reordered;
+        return grid.ranks_reordered();
     }
 
     assigned_grid2D grid;

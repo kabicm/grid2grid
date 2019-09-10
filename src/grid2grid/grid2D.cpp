@@ -111,15 +111,17 @@ void assigned_grid2D::transpose() {
 
 void assigned_grid2D::reorder_ranks(std::vector<int>& reordering) {
     ranks_reordering = reordering;
-    ranks_reordered = true;
 }
 
 int assigned_grid2D::reordered_rank(int rank) const {
     assert(rank < std::max((int) ranks_reordering.size(), n_ranks));
-    if (ranks_reordered)
+    if (ranks_reordered())
         return ranks_reordering[rank];
     else
         return rank;
 }
 
+bool assigned_grid2D::ranks_reordered() const {
+    return ranks_reordering.size() > 0;
+}
 } // namespace grid2grid

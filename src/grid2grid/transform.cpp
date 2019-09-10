@@ -374,6 +374,7 @@ template <typename T>
 void exchange(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
     MPI_Request recv_reqs[recv_data.n_packed_messages];
 
+    PE(transform_irecv);
     int request_idx = 0;
     // initiate all receives
     for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
@@ -386,10 +387,14 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    PL();
 
+    PE(transform_packing)
     // copy blocks to temporary send buffers
     send_data.copy_to_buffer();
+    PL();
 
+    PE(transform_isend);
     request_idx = 0;
     MPI_Request send_reqs[send_data.n_packed_messages];
     // initiate all sends
@@ -403,23 +408,31 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    PL();
 
+    PE(transform_localblocks);
     // copy local data (that are on the same rank in both initial and final layout)
     // this is independent of MPI and can be executed in parallel
     copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    PL();
 
+    PE(transform_waitallirecv);
     MPI_Waitall(recv_data.n_packed_messages, recv_reqs, MPI_STATUSES_IGNORE);
+    PL();
 
+    PE(transform_unpacking);
     // copy the received data back to the final layout
     recv_data.copy_from_buffer();
+    PL();
 
+    PE(transform_waitallisend);
     // finish up the pending send requests
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    PL();
 }
 
 template <typename T>
 void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
-
     PE(transform_irecv);
     MPI_Request recv_reqs[recv_data.n_packed_messages];
     int request_idx = 0;
@@ -513,8 +526,8 @@ comm_volume communication_volume(assigned_grid2D& g_init,
                 int smaller_rank = std::min(rank, target_rank);
                 int larger_rank = std::max(rank, target_rank);
 
-                edge_t edge_between_ranks =
-                    {smaller_rank, larger_rank};
+                edge_t edge_between_ranks{smaller_rank, larger_rank};
+                // edge_t edge_between_ranks{rank, target_rank};
 
                 weights[edge_between_ranks] += weight;
             }
