@@ -191,6 +191,7 @@ block<T> block<T>::subblock(interval r_range, interval c_range) const {
     if (conjugate_on_copy)
         flag = 'C';
     b.transpose_or_conjugate(flag);
+    b.tag = tag;
     return b;
 }
 
@@ -205,9 +206,15 @@ bool block<T>::non_empty() const {
 
 template <typename T>
 bool block<T>::operator<(const block &other) const {
-    return cols_interval.start < other.cols_interval.start ||
-           (cols_interval.start == other.cols_interval.start &&
-            rows_interval.start < other.rows_interval.start);
+    return cols_interval < other.cols_interval ||
+           (cols_interval == other.cols_interval &&
+            rows_interval < other.rows_interval) ||
+           (cols_interval == other.cols_interval &&
+            rows_interval == other.rows_interval &&
+            tag < other.tag);
+    // return cols_interval.start < other.cols_interval.start ||
+    //        (cols_interval.start == other.cols_interval.start &&
+    //         rows_interval.start < other.rows_interval.start);
 }
 
 template <typename T>

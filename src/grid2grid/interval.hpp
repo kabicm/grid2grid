@@ -37,6 +37,7 @@ struct interval {
 
     bool operator==(const interval &other) const;
     bool operator!=(const interval &other) const;
+    bool operator<(const interval &other) const;
 };
 
 std::ostream &operator<<(std::ostream &os, const interval &other);

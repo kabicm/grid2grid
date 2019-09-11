@@ -5,7 +5,9 @@ add_library(grid2grid STATIC block.cpp
                              communication_data.cpp
                              grid_cover.cpp
                              ranks_reordering.hpp
-                             transform.cpp)
+                             transform.cpp
+                             transformer.hpp
+                             )
 
 target_include_directories(grid2grid PUBLIC
   $<BUILD_INTERFACE:${grid2grid_SOURCE_DIR}/src>

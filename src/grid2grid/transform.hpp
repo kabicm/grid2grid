@@ -76,6 +76,14 @@ void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
                MPI_Comm comm);
 
+template <typename T>
+using layout_ref = std::reference_wrapper<grid_layout<T>>;
+
+template <typename T>
+void transform(std::vector<layout_ref<T>>& initial_layouts,
+               std::vector<layout_ref<T>>& final_layouts,
+               MPI_Comm comm);
+
 comm_volume communication_volume(assigned_grid2D& initial_grid,
                                  assigned_grid2D& final_grid);
 } // namespace grid2grid

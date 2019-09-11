@@ -116,7 +116,8 @@ void merge_messages(std::vector<message<T>> &messages) {
 
 template <typename T>
 std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
-                                         const grid_layout<T> &final_layout) {
+                                         const grid_layout<T> &final_layout,
+                                         int tag = 0) {
     PE(transform_decompose);
     grid_cover g_overlap(init_layout.grid.grid(), final_layout.grid.grid());
 
@@ -126,12 +127,12 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
         // std::cout << "decomposing block " << i << " out of " <<
         // init_layout.blocks.num_blocks() << std::endl;
         auto blk = init_layout.blocks.get_block(i);
+        blk.tag = tag;
         assert(blk.non_empty());
         std::vector<message<T>> decomposed =
             decompose_block(blk, g_overlap, final_layout.grid);
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
-    merge_messages(messages);
     PL();
     return messages;
 }
@@ -148,22 +149,56 @@ communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
     // rank = init_layout.reordered_rank(rank);
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
+    merge_messages(messages);
     return communication_data<T>(messages, rank, final_layout.num_ranks());
+}
+
+template <typename T>
+communication_data<T> prepare_to_send(
+                                      std::vector<layout_ref<T>>& from,
+                                      std::vector<layout_ref<T>>& to,
+                                      int rank) {
+    std::vector<message<T>> messages;
+    int n_ranks = 0;
+
+    for (unsigned i = 0u; i < from.size(); ++i) {
+        auto& init_layout = from[i].get();
+        auto& final_layout = to[i].get();
+        auto decomposed_blocks = decompose_blocks(init_layout, final_layout, i);
+        messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
+        n_ranks = std::max(n_ranks, final_layout.num_ranks());
+    }
+    merge_messages(messages);
+    return communication_data<T>(messages, rank, n_ranks);
 }
 
 template <typename T>
 communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
                                       const grid_layout<T> &init_layout,
                                       int rank) {
-    // in case ranks were reordered to minimize the communication
-    // this might not be the identity function
-    // if (rank == 0) {
-    //     std::cout << "prepare to recv: changing rank to " << final_layout.reordered_rank(rank) << std::endl;
-    // }
-    // rank = final_layout.reordered_rank(rank);
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
+    merge_messages(messages);
     return communication_data<T>(messages, rank, init_layout.num_ranks());
+}
+
+template <typename T>
+communication_data<T> prepare_to_recv(
+                                      std::vector<layout_ref<T>>& to,
+                                      std::vector<layout_ref<T>>& from,
+                                      int rank) {
+    std::vector<message<T>> messages;
+    int n_ranks = 0;
+
+    for (unsigned i = 0u; i < from.size(); ++i) {
+        auto& init_layout = from[i].get();
+        auto& final_layout = to[i].get();
+        auto decomposed_blocks = decompose_blocks(final_layout, init_layout, i);
+        messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
+        n_ranks = std::max(n_ranks, init_layout.num_ranks());
+    }
+    merge_messages(messages);
+    return communication_data<T>(messages, rank, n_ranks);
 }
 
 inline std::vector<int> line_split(int begin, int end, int blk_len) {
@@ -561,26 +596,45 @@ void transform(grid_layout<T> &initial_layout,
     // }
 
 #ifdef DEBUG
-    std::cout << "send buffer content: " << std::endl;
-    for (int i = 0; i < send_data.total_size; ++i) {
-        // std::pair<int, int> el =
-        // math_utils::invert_cantor_pairing((int)send_data.buffer[i]);
-        std::cout << send_data.buffer[i] << ", ";
+    if (rank == 0) {
+        std::cout << "send buffer content: " << std::endl;
+        for (int i = 0; i < send_data.total_size; ++i) {
+            // std::pair<int, int> el =
+            // math_utils::invert_cantor_pairing((int)send_data.buffer[i]);
+            std::cout << send_data.buffer[i] << ", ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 #endif
 
     // perform the communication
     exchange_async(send_data, recv_data, comm);
 #ifdef DEBUG
-    std::cout << "recv buffer content: " << std::endl;
-    for (int i = 0; i < recv_data.total_size; ++i) {
-        // std::pair<int, int> el =
-        // math_utils::invert_cantor_pairing((int)recv_data.buffer[i]);
-        std::cout << recv_data.buffer[i] << ", ";
+    if (rank == 0) {
+        std::cout << "recv buffer content: " << std::endl;
+        for (int i = 0; i < recv_data.total_size; ++i) {
+            // std::pair<int, int> el =
+            // math_utils::invert_cantor_pairing((int)recv_data.buffer[i]);
+            std::cout << recv_data.buffer[i] << ", ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 #endif
+}
+
+template <typename T>
+void transform(std::vector<layout_ref<T>>& from,
+               std::vector<layout_ref<T>>& to,
+               MPI_Comm comm) {
+    assert(from.size() == to.size());
+
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
+    auto send_data = prepare_to_send(from, to, rank);
+    auto recv_data = prepare_to_recv(to, from, rank);
+
+    exchange_async(send_data, recv_data, comm);
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,
@@ -600,6 +654,25 @@ template void transform<std::complex<double>>(
     grid_layout<std::complex<double>> &initial_layout,
     grid_layout<std::complex<double>> &final_layout,
     MPI_Comm comm);
+
+// explicit instantiation of transform with vectors
+template void transform<float>(std::vector<layout_ref<float>>& initial_layouts,
+                               std::vector<layout_ref<float>>& final_layouts,
+                               MPI_Comm comm);
+
+template void transform<double>(std::vector<layout_ref<double>>& initial_layouts,
+                                std::vector<layout_ref<double>>& final_layouts,
+                                MPI_Comm comm);
+
+template void transform<std::complex<float>>(
+                               std::vector<layout_ref<std::complex<float>>>& initial_layouts,
+                               std::vector<layout_ref<std::complex<float>>>& final_layouts,
+                               MPI_Comm comm);
+
+template void transform<std::complex<double>>(
+                               std::vector<layout_ref<std::complex<double>>>& initial_layouts,
+                               std::vector<layout_ref<std::complex<double>>>& final_layouts,
+                               MPI_Comm comm);
 
 template grid_layout<float>
 get_scalapack_grid(int lld,

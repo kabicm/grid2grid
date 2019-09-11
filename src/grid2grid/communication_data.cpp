@@ -26,7 +26,7 @@ int message<T>::get_rank() const {
 template <typename T>
 bool message<T>::operator<(const message<T> &other) const {
     return get_rank() < other.get_rank() ||
-           (get_rank() == other.get_rank() && b < other.get_block());
+           (get_rank() == other.get_rank() && b < other.get_block()); 
 }
 
 template <typename T>
