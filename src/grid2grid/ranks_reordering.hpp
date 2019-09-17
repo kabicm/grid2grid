@@ -1,11 +1,13 @@
 #pragma once
+
 #include <grid2grid/comm_volume.hpp>
 #include <unordered_set>
 #include <vector>
+#include <limits>
 
 namespace grid2grid {
-std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
-    std::unordered_set<int> visited;
+std::vector<int> optimal_reordering(comm_volume comm_volume, int n_ranks) {
+    std::vector<bool> visited(n_ranks, false);
 
     // identity permutation
     std::vector<int> permutation;
@@ -21,6 +23,12 @@ std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
         int w = el.second;
         int src = e.src;
         int dest = e.dest;
+
+        // w += comm_volume.volume[edge_t{dest, src}];
+        w *= 2;
+        w -= comm_volume.volume[edge_t{src, src}];
+        w -= comm_volume.volume[edge_t{dest, dest}];
+
         sorted_edges.push_back(weighted_edge_t(src, dest, w));
     }
 
@@ -29,23 +37,21 @@ std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
 
     for (const auto& edge : sorted_edges) {
         // edge: src->dest with weight w
-        if (visited.find(edge.src()) != visited.end()) {
+        if (visited[edge.src()] || visited[edge.dest()])
             continue;
-        }
-        if (visited.find(edge.dest()) != visited.end()) {
-            continue;
-        }
 
-        // map src -> dest
-        // take this edge to perfect matching
-        permutation[edge.src()] = edge.dest();
-        permutation[edge.dest()] = edge.src();
+        if (edge.weight()) {
+            // map src -> dest
+            // take this edge to perfect matching
+            permutation[edge.src()] = edge.dest();
+            permutation[edge.dest()] = edge.src();
+        }
 
         // no adjecent edge to these vertices
         // can be taken in the future
         // to preserve the perfect matching
-        visited.insert(edge.src());
-        visited.insert(edge.dest());
+        visited[edge.src()] = true;
+        visited[edge.dest()] = true;
     }
 
     return permutation;

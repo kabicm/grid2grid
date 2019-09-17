@@ -414,7 +414,12 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
     // initiate all receives
     for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
         if (recv_data.counts[i]) {
-            MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+            // MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+            //           recv_data.counts[i],
+            //           mpi_type_wrapper<T>::type(),
+            //           i, 0, comm,
+            //           &recv_reqs[request_idx]);
+            MPI_Recv_init(recv_data.data() + recv_data.dspls[i],
                       recv_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
@@ -422,6 +427,7 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    MPI_Startall(recv_data.n_packed_messages, recv_reqs);
     PL();
 
     PE(transform_packing)
@@ -435,7 +441,12 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
     // initiate all sends
     for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
         if (send_data.counts[i]) {
-            MPI_Isend(send_data.data() + send_data.dspls[i], 
+            // MPI_Issend(send_data.data() + send_data.dspls[i], 
+            //           send_data.counts[i],
+            //           mpi_type_wrapper<T>::type(),
+            //           i, 0, comm,
+            //           &send_reqs[request_idx]);
+            MPI_Send_init(send_data.data() + send_data.dspls[i], 
                       send_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
@@ -443,6 +454,7 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    MPI_Startall(send_data.n_packed_messages, send_reqs);
     PL();
 
     PE(transform_localblocks);
@@ -482,6 +494,7 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    // MPI_Startall(recv_data.n_packed_messages, recv_reqs);
     PL();
 
     PE(transform_packing);
@@ -503,6 +516,7 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    // MPI_Startall(send_data.n_packed_messages, send_reqs);
     PL();
 
     PE(transform_localblocks);
@@ -510,7 +524,6 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
     // this is independent of MPI and can be executed in parallel
     copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
     PL();
-
 
     // wait for any package and immediately unpack it
     for (unsigned i = 0u; i < recv_data.n_packed_messages; ++i) {
@@ -532,12 +545,6 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
     PL();
 }
-
-// std::vector<int> reorder_ranks(grid_layout<T>& initial_layout,
-//                                grid_layout<T>& final_layout) {
-// 
-// 
-// }
 
 comm_volume communication_volume(assigned_grid2D& g_init,
                                  assigned_grid2D& g_final) {
@@ -563,7 +570,6 @@ comm_volume communication_volume(assigned_grid2D& g_init,
 
                 edge_t edge_between_ranks{smaller_rank, larger_rank};
                 // edge_t edge_between_ranks{rank, target_rank};
-
                 weights[edge_between_ranks] += weight;
             }
         }

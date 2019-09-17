@@ -2,6 +2,7 @@
 #include <grid2grid/profiler.hpp>
 
 #include <complex>
+#include <omp.h>
 
 namespace grid2grid {
 // *********************
@@ -128,6 +129,7 @@ template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
 
+// #pragma omp parallel for schedule(dynamic, 1)
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
@@ -192,6 +194,7 @@ void copy_block_to_block(block<T>& src, block<T>& dest) {
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
+// #pragma omp parallel for schedule(dynamic, 1)
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
@@ -229,13 +232,12 @@ template void
 copy_local_blocks(std::vector<block<std::complex<double>>>& from, std::vector<block<std::complex<double>>>& to);
 
 // template instantiation for copy_block_to_block
-template void
-copy_block_to_block(block<double>& src, block<double>& dest);
-template void
-copy_block_to_block(block<float>& src, block<float>& dest);
-template void
-copy_block_to_block(block<std::complex<float>>& src, block<std::complex<float>>& dest);
-template void
-copy_block_to_block(block<std::complex<double>>& src, block<std::complex<double>>& dest);
-
+// template void
+// copy_block_to_block(block<double>& src, block<double>& dest);
+// template void
+// copy_block_to_block(block<float>& src, block<float>& dest);
+// template void
+// copy_block_to_block(block<std::complex<float>>& src, block<std::complex<float>>& dest);
+// template void
+// copy_block_to_block(block<std::complex<double>>& src, block<std::complex<double>>& dest);
 } // namespace grid2grid

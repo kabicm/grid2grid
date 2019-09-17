@@ -94,7 +94,6 @@ struct comm_volume {
             auto& e = vol.first;
             int w = vol.second;
             volume[e.sorted()] += w;
-            // volume[e] += w;
         }
         return *this;
     }
@@ -111,13 +110,12 @@ struct comm_volume {
             auto& e = vol.first;
             auto w = vol.second;
             sum_comm_vol[e.sorted()] += w;
-            // sum_comm_vol[e] += w;
         }
         return sum_comm_vol;
     }
 
-    size_t total_volume() {
-        size_t sum = 0;
+    int total_volume() {
+        int sum = 0;
         for (const auto& vol : volume) {
             auto& e = vol.first;
             int w = vol.second;
