@@ -6,7 +6,7 @@
 #include <limits>
 
 namespace grid2grid {
-std::vector<int> optimal_reordering(comm_volume comm_volume, int n_ranks) {
+std::vector<int> optimal_reordering(comm_volume& comm_volume, int n_ranks) {
     std::vector<bool> visited(n_ranks, false);
 
     // identity permutation

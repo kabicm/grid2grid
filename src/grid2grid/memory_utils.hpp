@@ -66,7 +66,7 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
     int n_rows = b.n_cols();
     int n_cols = b.n_rows();
 
-    int block_dim = 32;
+    int block_dim = std::max(8, 128/(int)sizeof(T));
 
     std::vector<T> b_elems(block_dim);
     for (int block_i = 0; block_i < n_rows; block_i += block_dim) {

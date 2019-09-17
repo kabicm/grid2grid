@@ -114,14 +114,15 @@ struct comm_volume {
         return sum_comm_vol;
     }
 
-    int total_volume() {
-        int sum = 0;
+    size_t total_volume() {
+        size_t sum = 0;
         for (const auto& vol : volume) {
             auto& e = vol.first;
             int w = vol.second;
             // if not a local communication, count it
             if (e.src != e.dest) {
-                sum += w;
+                assert(w > 0);
+                sum += (size_t) w;
             }
         }
         return sum;

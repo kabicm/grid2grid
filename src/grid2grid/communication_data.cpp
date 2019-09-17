@@ -128,8 +128,6 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
 template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
-
-// #pragma omp parallel for schedule(dynamic, 1)
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
