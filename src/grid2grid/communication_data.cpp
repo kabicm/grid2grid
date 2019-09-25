@@ -1,5 +1,4 @@
 #include <grid2grid/communication_data.hpp>
-#include <grid2grid/profiler.hpp>
 
 #include <complex>
 #include <omp.h>
@@ -54,7 +53,6 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
                                           int rank, int n_ranks)
     : n_ranks(n_ranks)
     , my_rank(rank) {
-    PE(transform_commdata);
     // std::cout << "constructor of communciation data invoked" << std::endl;
     dspls = std::vector<int>(n_ranks);
     counts = std::vector<int>(n_ranks);
@@ -98,7 +96,6 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
     }
 
     partition_messages();
-    PL();
 }
 
 template <typename T>
@@ -192,7 +189,6 @@ void copy_block_to_block(block<T>& src, block<T>& dest) {
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
-// #pragma omp parallel for schedule(dynamic, 1)
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
