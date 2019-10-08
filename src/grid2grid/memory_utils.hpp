@@ -8,7 +8,6 @@
 #include <type_traits>
 #include <utility>
 #include <omp.h>
-#include <blaze/math/CustomMatrix.h>
 
 namespace grid2grid {
 namespace memory {
@@ -75,19 +74,6 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
     int n_blocks_col = (n_cols+block_dim-1)/block_dim;
     int n_blocks = n_blocks_row * n_blocks_col;
 
-    using strided_matrix = blaze::CustomMatrix<T, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
-    strided_matrix mat1(b.data, (unsigned)b.stride, (unsigned)n_cols);
-    strided_matrix mat2(dest_ptr, (unsigned)dest_stride, (unsigned)n_rows);
-
-    auto mat1_sub = submatrix(mat1, 0u, 0u, n_rows, mat1.columns());
-    auto mat2_sub = submatrix(mat2, 0u, 0u, n_cols, mat2.columns());
-
-    if (b.conjugate_on_copy)
-        mat2_sub = blaze::ctrans(mat1_sub);
-    else
-        mat2_sub = blaze::trans(mat1_sub);
-
-    /*
     std::vector<T> b_elems(block_dim);
     for (int block = 0; block < n_blocks; ++block) {
         int block_i = block / n_blocks_col;
@@ -126,7 +112,6 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
             }
         }
     }
-    */
 }
 } // namespace memory
 } // namespace grid2grid
