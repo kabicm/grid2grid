@@ -1,7 +1,7 @@
 #include <grid2grid/communication_data.hpp>
-#include <grid2grid/profiler.hpp>
 
 #include <complex>
+#include <omp.h>
 
 namespace grid2grid {
 // *********************
@@ -26,7 +26,7 @@ int message<T>::get_rank() const {
 template <typename T>
 bool message<T>::operator<(const message<T> &other) const {
     return get_rank() < other.get_rank() ||
-           (get_rank() == other.get_rank() && b < other.get_block());
+           (get_rank() == other.get_rank() && b < other.get_block()); 
 }
 
 template <typename T>
@@ -53,7 +53,6 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
                                           int rank, int n_ranks)
     : n_ranks(n_ranks)
     , my_rank(rank) {
-    PE(transform_commdata);
     // std::cout << "constructor of communciation data invoked" << std::endl;
     dspls = std::vector<int>(n_ranks);
     counts = std::vector<int>(n_ranks);
@@ -97,7 +96,6 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
     }
 
     partition_messages();
-    PL();
 }
 
 template <typename T>
@@ -127,8 +125,7 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
 template <typename T>
 void communication_data<T>::copy_to_buffer() {
     // std::cout << "commuication data.copy_to_buffer()" << std::endl;
-
-#pragma omp parallel for
+// #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -139,9 +136,21 @@ void communication_data<T>::copy_to_buffer() {
 }
 
 template <typename T>
+void communication_data<T>::copy_to_buffer(int idx) {
+    assert(idx >= 0 && idx+1 < package_ticks.size());
+// #pragma omp parallel for schedule(dynamic, 1)
+    for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+        const auto &m = mpi_messages[i];
+        block<T> b = m.get_block();
+        int target_rank = m.get_rank();
+        copy_block_to_buffer(b, data() + offset_per_message[i]);
+    }
+}
+
+template <typename T>
 void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -152,7 +161,7 @@ void communication_data<T>::copy_from_buffer(int idx) {
 
 template <typename T>
 void communication_data<T>::copy_from_buffer() {
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
@@ -180,11 +189,12 @@ void copy_block_to_block(block<T>& src, block<T>& dest) {
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
-// #pragma omp parallel for
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
         auto& block_dest = to[i];
         assert(block_src.non_empty());
+        assert(block_dest.non_empty());
         assert(block_src.total_size() == block_dest.total_size());
         // destination block cannot be transposed
         assert(!block_dest.transpose_on_copy);
@@ -216,13 +226,12 @@ template void
 copy_local_blocks(std::vector<block<std::complex<double>>>& from, std::vector<block<std::complex<double>>>& to);
 
 // template instantiation for copy_block_to_block
-template void
-copy_block_to_block(block<double>& src, block<double>& dest);
-template void
-copy_block_to_block(block<float>& src, block<float>& dest);
-template void
-copy_block_to_block(block<std::complex<float>>& src, block<std::complex<float>>& dest);
-template void
-copy_block_to_block(block<std::complex<double>>& src, block<std::complex<double>>& dest);
-
+// template void
+// copy_block_to_block(block<double>& src, block<double>& dest);
+// template void
+// copy_block_to_block(block<float>& src, block<float>& dest);
+// template void
+// copy_block_to_block(block<std::complex<float>>& src, block<std::complex<float>>& dest);
+// template void
+// copy_block_to_block(block<std::complex<double>>& src, block<std::complex<double>>& dest);
 } // namespace grid2grid

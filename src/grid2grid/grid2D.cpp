@@ -62,7 +62,9 @@ assigned_grid2D::assigned_grid2D(grid2D &&g,
     , n_ranks(n_ranks) {}
 
 // returns the rank owning block (i, j)
-int assigned_grid2D::owner(int i, int j) const { return ranks[i][j]; }
+int assigned_grid2D::owner(int i, int j) const { 
+    return reordered_rank(ranks[i][j]);
+}
 
 // returns a grid
 const grid2D &assigned_grid2D::grid() const { return g; }
@@ -105,5 +107,21 @@ assigned_grid2D::transpose(const std::vector<std::vector<int>> &v) {
 void assigned_grid2D::transpose() {
     g.transpose();
     ranks = transpose(ranks);
+}
+
+void assigned_grid2D::reorder_ranks(std::vector<int>& reordering) {
+    ranks_reordering = reordering;
+}
+
+int assigned_grid2D::reordered_rank(int rank) const {
+    assert(rank < std::max((int) ranks_reordering.size(), n_ranks));
+    if (ranks_reordered())
+        return ranks_reordering[rank];
+    else
+        return rank;
+}
+
+bool assigned_grid2D::ranks_reordered() const {
+    return ranks_reordering.size() > 0;
 }
 } // namespace grid2grid

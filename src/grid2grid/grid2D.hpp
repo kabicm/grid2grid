@@ -15,8 +15,9 @@ For each i, the following must hold:
     - 0 <= cols_split[i] < n_cols
 */
 struct grid2D {
-    // matrix dimensions
+    // number of blocks in a row
     int n_rows = 0;
+    // number of columns in a row
     int n_cols = 0;
     // defines how rows are split
     std::vector<int> rows_split;
@@ -74,6 +75,22 @@ class assigned_grid2D {
     // if flag='C' => transpose and conjugate
     void transpose();
 
+    void reorder_ranks(std::vector<int>& reordering);
+
+    int reordered_rank(int rank) const;
+
+    bool ranks_reordered() const;
+
+    friend std::ostream &operator<<(std::ostream &os, const assigned_grid2D &other) {
+        for (int i = 0; i < other.grid().n_rows; ++i) {
+            for (int j = 0; j < other.grid().n_cols; ++j) {
+                os << "block (" << i << ", " << j << ") owned by " 
+                   << other.owner(i, j) << std::endl;
+            }
+        }
+        return os;
+    }
+
     int num_rows() const noexcept { return g.rows_split.back(); }
     int num_cols() const noexcept { return g.cols_split.back(); }
 
@@ -87,6 +104,8 @@ class assigned_grid2D {
     grid2D g;
     std::vector<std::vector<int>> ranks;
     int n_ranks = 0;
+
+    std::vector<int> ranks_reordering;
 };
 
 bool operator==(assigned_grid2D const &, assigned_grid2D const &) noexcept;

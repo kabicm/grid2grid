@@ -60,6 +60,9 @@ inline std::ostream &operator<<(std::ostream &os, const block_range &other) {
 // assumes column-major ordering inside block
 template <typename T>
 struct block {
+    // blocks from different matrices
+    // should have different tags
+    int tag = 0;
     // start and end index of the block
     interval rows_interval;
     interval cols_interval;

@@ -2,6 +2,7 @@
 #include <grid2grid/profiler.hpp>
 #include <complex>
 #include <thread>
+#include <unordered_map>
 
 namespace grid2grid {
 
@@ -59,6 +60,55 @@ std::vector<message<T>> decompose_block(const block<T> &b,
     return decomposed_blocks;
 }
 
+std::unordered_map<int, int> rank_to_comm_vol_for_block(const assigned_grid2D& g_init,
+                                                        const block_coordinates &b_coord,
+                                                        grid_cover &g_cover,
+                                                        const assigned_grid2D& g_final) {
+    // std::cout << "decomposing block " << b << std::endl;
+    block_cover b_cover = g_cover.decompose_block(b_coord);
+
+    int row_first = b_cover.rows_cover.start_index;
+    int row_last = b_cover.rows_cover.end_index;
+
+    int col_first = b_cover.cols_cover.start_index;
+    int col_last = b_cover.cols_cover.end_index;
+
+    auto rows_interval = g_init.rows_interval(b_coord.row);
+    auto cols_interval = g_init.cols_interval(b_coord.col);
+
+    std::unordered_map<int, int> comm_vol;
+
+    int row_start = rows_interval.start;
+    // use start of the interval to get the rank and the end of the interval
+    // to get the block which has to be sent
+    // skip the last element
+    for (int i = row_first; i < row_last; ++i) {
+        int row_end = std::min(g_final.grid().rows_split[i + 1], rows_interval.end);
+
+        int col_start = cols_interval.start;
+        for (int j = col_first; j < col_last; ++j) {
+            // use i, j to find out the rank
+            int rank = g_final.owner(i, j);
+            // std::cout << "owner of block " << i << ", " << j << " is " <<
+            // rank << std::endl;
+
+            // use i+1 and j+1 to find out the block
+            int col_end =
+                std::min(g_final.grid().cols_split[j + 1], cols_interval.end);
+
+            int size = (row_end - row_start) * (col_end - col_start);
+            // if non empty, add this block
+            if (size) {
+                comm_vol[rank] += size;
+            }
+
+            col_start = col_end;
+        }
+        row_start = row_end;
+    }
+    return comm_vol;
+}
+
 template <typename T>
 void merge_messages(std::vector<message<T>> &messages) {
     std::sort(messages.begin(), messages.end());
@@ -66,7 +116,8 @@ void merge_messages(std::vector<message<T>> &messages) {
 
 template <typename T>
 std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
-                                         const grid_layout<T> &final_layout) {
+                                         const grid_layout<T> &final_layout,
+                                         int tag = 0) {
     PE(transform_decompose);
     grid_cover g_overlap(init_layout.grid.grid(), final_layout.grid.grid());
 
@@ -76,12 +127,12 @@ std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
         // std::cout << "decomposing block " << i << " out of " <<
         // init_layout.blocks.num_blocks() << std::endl;
         auto blk = init_layout.blocks.get_block(i);
+        blk.tag = tag;
         assert(blk.non_empty());
         std::vector<message<T>> decomposed =
             decompose_block(blk, g_overlap, final_layout.grid);
         messages.insert(messages.end(), decomposed.begin(), decomposed.end());
     }
-    merge_messages(messages);
     PL();
     return messages;
 }
@@ -90,9 +141,35 @@ template <typename T>
 communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
                                       const grid_layout<T> &final_layout,
                                       int rank) {
+    // in case ranks were reordered to minimize the communication
+    // this might not be the identity function
+    // if (rank == 0) {
+    //     std::cout << "prepare to send: changing rank to " << init_layout.reordered_rank(rank) << std::endl;
+    // }
+    // rank = init_layout.reordered_rank(rank);
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
+    merge_messages(messages);
     return communication_data<T>(messages, rank, final_layout.num_ranks());
+}
+
+template <typename T>
+communication_data<T> prepare_to_send(
+                                      std::vector<layout_ref<T>>& from,
+                                      std::vector<layout_ref<T>>& to,
+                                      int rank) {
+    std::vector<message<T>> messages;
+    int n_ranks = 0;
+
+    for (unsigned i = 0u; i < from.size(); ++i) {
+        auto& init_layout = from[i].get();
+        auto& final_layout = to[i].get();
+        auto decomposed_blocks = decompose_blocks(init_layout, final_layout, i);
+        messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
+        n_ranks = std::max(n_ranks, final_layout.num_ranks());
+    }
+    merge_messages(messages);
+    return communication_data<T>(messages, rank, n_ranks);
 }
 
 template <typename T>
@@ -101,7 +178,27 @@ communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
                                       int rank) {
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
+    merge_messages(messages);
     return communication_data<T>(messages, rank, init_layout.num_ranks());
+}
+
+template <typename T>
+communication_data<T> prepare_to_recv(
+                                      std::vector<layout_ref<T>>& to,
+                                      std::vector<layout_ref<T>>& from,
+                                      int rank) {
+    std::vector<message<T>> messages;
+    int n_ranks = 0;
+
+    for (unsigned i = 0u; i < from.size(); ++i) {
+        auto& init_layout = from[i].get();
+        auto& final_layout = to[i].get();
+        auto decomposed_blocks = decompose_blocks(final_layout, init_layout, i);
+        messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
+        n_ranks = std::max(n_ranks, init_layout.num_ranks());
+    }
+    merge_messages(messages);
+    return communication_data<T>(messages, rank, n_ranks);
 }
 
 inline std::vector<int> line_split(int begin, int end, int blk_len) {
@@ -312,11 +409,17 @@ template <typename T>
 void exchange(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
     MPI_Request recv_reqs[recv_data.n_packed_messages];
 
+    PE(transform_irecv);
     int request_idx = 0;
     // initiate all receives
     for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
         if (recv_data.counts[i]) {
-            MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+            // MPI_Irecv(recv_data.data() + recv_data.dspls[i],
+            //           recv_data.counts[i],
+            //           mpi_type_wrapper<T>::type(),
+            //           i, 0, comm,
+            //           &recv_reqs[request_idx]);
+            MPI_Recv_init(recv_data.data() + recv_data.dspls[i],
                       recv_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
@@ -324,16 +427,26 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    MPI_Startall(recv_data.n_packed_messages, recv_reqs);
+    PL();
 
+    PE(transform_packing)
     // copy blocks to temporary send buffers
     send_data.copy_to_buffer();
+    PL();
 
+    PE(transform_isend);
     request_idx = 0;
     MPI_Request send_reqs[send_data.n_packed_messages];
     // initiate all sends
     for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
         if (send_data.counts[i]) {
-            MPI_Isend(send_data.data() + send_data.dspls[i], 
+            // MPI_Issend(send_data.data() + send_data.dspls[i], 
+            //           send_data.counts[i],
+            //           mpi_type_wrapper<T>::type(),
+            //           i, 0, comm,
+            //           &send_reqs[request_idx]);
+            MPI_Send_init(send_data.data() + send_data.dspls[i], 
                       send_data.counts[i],
                       mpi_type_wrapper<T>::type(),
                       i, 0, comm,
@@ -341,23 +454,32 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
             ++request_idx;
         }
     }
+    MPI_Startall(send_data.n_packed_messages, send_reqs);
+    PL();
 
+    PE(transform_localblocks);
     // copy local data (that are on the same rank in both initial and final layout)
     // this is independent of MPI and can be executed in parallel
     copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
+    PL();
 
+    PE(transform_waitallirecv);
     MPI_Waitall(recv_data.n_packed_messages, recv_reqs, MPI_STATUSES_IGNORE);
+    PL();
 
+    PE(transform_unpacking);
     // copy the received data back to the final layout
     recv_data.copy_from_buffer();
+    PL();
 
+    PE(transform_waitallisend);
     // finish up the pending send requests
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    PL();
 }
 
 template <typename T>
 void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
-
     PE(transform_irecv);
     MPI_Request recv_reqs[recv_data.n_packed_messages];
     int request_idx = 0;
@@ -372,6 +494,7 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    // MPI_Startall(recv_data.n_packed_messages, recv_reqs);
     PL();
 
     PE(transform_packing);
@@ -393,6 +516,13 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
             ++request_idx;
         }
     }
+    // MPI_Startall(send_data.n_packed_messages, send_reqs);
+    PL();
+
+    PE(transform_localblocks);
+    // copy local data (that are on the same rank in both initial and final layout)
+    // this is independent of MPI and can be executed in parallel
+    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
     PL();
 
     // wait for any package and immediately unpack it
@@ -410,16 +540,42 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
         PL();
     }
 
-    PE(transform_localblocks);
-    // copy local data (that are on the same rank in both initial and final layout)
-    // this is independent of MPI and can be executed in parallel
-    copy_local_blocks(send_data.local_blocks, recv_data.local_blocks);
-    PL();
-
     PE(transform_waitall);
     // finish up the send requests since all the receive requests are finished
     MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
     PL();
+}
+
+comm_volume communication_volume(assigned_grid2D& g_init,
+                                 assigned_grid2D& g_final) {
+    grid_cover g_cover(g_init.grid(), g_final.grid());
+
+    int n_blocks_row = g_init.grid().n_rows;
+    int n_blocks_col = g_init.grid().n_cols;
+
+    std::unordered_map<edge_t, int> weights;
+
+    for (int i = 0; i < n_blocks_row; ++i) {
+        for (int j = 0; j < n_blocks_col; ++j) {
+            auto rank_to_comm_vol = rank_to_comm_vol_for_block(
+                g_init, block_coordinates{i, j}, g_cover, g_final);
+            int rank = g_init.owner(i, j);
+
+            for (const auto& comm_vol : rank_to_comm_vol) {
+                int target_rank = comm_vol.first;
+                int weight = comm_vol.second;
+
+                int smaller_rank = std::min(rank, target_rank);
+                int larger_rank = std::max(rank, target_rank);
+
+                edge_t edge_between_ranks{smaller_rank, larger_rank};
+                // edge_t edge_between_ranks{rank, target_rank};
+                weights[edge_between_ranks] += weight;
+            }
+        }
+    }
+
+    return comm_volume(std::move(weights));
 }
 
 template <typename T>
@@ -429,33 +585,62 @@ void transform(grid_layout<T> &initial_layout,
     int rank;
     MPI_Comm_rank(comm, &rank);
 
+    // std::cout << "rank = " << rank << " preparing sending data" << std::endl;
     communication_data<T> send_data =
         prepare_to_send(initial_layout, final_layout, rank);
 
+    // std::cout << "rank = " << rank << " preparing receiving data" << std::endl;
     communication_data<T> recv_data =
         prepare_to_recv(final_layout, initial_layout, rank);
 
+    // auto comm_volume = communication_volume(initial_layout, final_layout);
+
+    // if (rank == 0) {
+    //     for (const auto& edge : comm_volume) {
+    //         std::cout << edge.src() << "->" << edge.dest() << " = " << edge.weight() << std::endl;
+    //     }
+    // }
+
 #ifdef DEBUG
-    std::cout << "send buffer content: " << std::endl;
-    for (int i = 0; i < send_data.total_size; ++i) {
-        // std::pair<int, int> el =
-        // math_utils::invert_cantor_pairing((int)send_data.buffer[i]);
-        std::cout << send_data.buffer[i] << ", ";
+    if (rank == 0) {
+        std::cout << "send buffer content: " << std::endl;
+        for (int i = 0; i < send_data.total_size; ++i) {
+            // std::pair<int, int> el =
+            // math_utils::invert_cantor_pairing((int)send_data.buffer[i]);
+            std::cout << send_data.buffer[i] << ", ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 #endif
 
     // perform the communication
     exchange_async(send_data, recv_data, comm);
 #ifdef DEBUG
-    std::cout << "recv buffer content: " << std::endl;
-    for (int i = 0; i < recv_data.total_size; ++i) {
-        // std::pair<int, int> el =
-        // math_utils::invert_cantor_pairing((int)recv_data.buffer[i]);
-        std::cout << recv_data.buffer[i] << ", ";
+    if (rank == 0) {
+        std::cout << "recv buffer content: " << std::endl;
+        for (int i = 0; i < recv_data.total_size; ++i) {
+            // std::pair<int, int> el =
+            // math_utils::invert_cantor_pairing((int)recv_data.buffer[i]);
+            std::cout << recv_data.buffer[i] << ", ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
 #endif
+}
+
+template <typename T>
+void transform(std::vector<layout_ref<T>>& from,
+               std::vector<layout_ref<T>>& to,
+               MPI_Comm comm) {
+    assert(from.size() == to.size());
+
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+
+    auto send_data = prepare_to_send(from, to, rank);
+    auto recv_data = prepare_to_recv(to, from, rank);
+
+    exchange_async(send_data, recv_data, comm);
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,
@@ -475,6 +660,25 @@ template void transform<std::complex<double>>(
     grid_layout<std::complex<double>> &initial_layout,
     grid_layout<std::complex<double>> &final_layout,
     MPI_Comm comm);
+
+// explicit instantiation of transform with vectors
+template void transform<float>(std::vector<layout_ref<float>>& initial_layouts,
+                               std::vector<layout_ref<float>>& final_layouts,
+                               MPI_Comm comm);
+
+template void transform<double>(std::vector<layout_ref<double>>& initial_layouts,
+                                std::vector<layout_ref<double>>& final_layouts,
+                                MPI_Comm comm);
+
+template void transform<std::complex<float>>(
+                               std::vector<layout_ref<std::complex<float>>>& initial_layouts,
+                               std::vector<layout_ref<std::complex<float>>>& final_layouts,
+                               MPI_Comm comm);
+
+template void transform<std::complex<double>>(
+                               std::vector<layout_ref<std::complex<double>>>& initial_layouts,
+                               std::vector<layout_ref<std::complex<double>>>& final_layouts,
+                               MPI_Comm comm);
 
 template grid_layout<float>
 get_scalapack_grid(int lld,
@@ -627,5 +831,4 @@ template grid_layout<std::complex<double>>
 get_scalapack_grid(scalapack::data_layout &layout,
                    std::complex<double> *ptr,
                    int rank);
-
 } // namespace grid2grid

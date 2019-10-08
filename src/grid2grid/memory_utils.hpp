@@ -7,6 +7,8 @@
 #include <cmath>
 #include <type_traits>
 #include <utility>
+#include <omp.h>
+#include <blaze/math/CustomMatrix.h>
 
 namespace grid2grid {
 namespace memory {
@@ -47,14 +49,15 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
         copy(block_size, src_ptr, dest_ptr);
     } else {
         // if strided, copy column-by-column
-        for (unsigned col = 0; col < dim.second; ++col) {
+        // #pragma omp task firstprivate(dim, src_ptr, ld_src, dest_ptr, ld_dest)
+        for (size_t col = 0; col < dim.second; ++col) {
+            // #pragma omp task firstprivate(dim, src_ptr, ld_src, col, dest_ptr, ld_dest)
             copy(dim.first,
                  src_ptr + ld_src * col,
                  dest_ptr + ld_dest * col);
         }
     }
 }
-
 
 // copy from block to MPI send buffer
 template <typename T>
@@ -66,42 +69,64 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
     int n_rows = b.n_cols();
     int n_cols = b.n_rows();
 
-    int block_dim = 32;
-    int block_i;
-    int block_j;
+    int block_dim = std::max(8, 128/(int)sizeof(T));
 
-    // #pragma omp parallel for collapse(2)
-    for (block_i = 0; block_i < n_rows; block_i += block_dim) {
-        for (block_j = 0; block_j < n_cols; block_j += block_dim) {
-            // #pragma omp task firstprivate(block_i, block_j, dest_ptr, ptr, stride, conj, n_rows_t)
-            for (int i = block_i; i < std::min(n_rows, block_i + block_dim); ++i) {
-                for (int j = block_j; j < std::min(n_cols, block_j + block_dim); ++j) {
-                    // for (int j = std::min(n_cols, block_j + block_dim)-1; j >= 0; --j) {
+    int n_blocks_row = (n_rows+block_dim-1)/block_dim;
+    int n_blocks_col = (n_cols+block_dim-1)/block_dim;
+    int n_blocks = n_blocks_row * n_blocks_col;
+
+    using strided_matrix = blaze::CustomMatrix<T, blaze::unaligned, blaze::unpadded, blaze::columnMajor>;
+    strided_matrix mat1(b.data, (unsigned)b.stride, (unsigned)n_cols);
+    strided_matrix mat2(dest_ptr, (unsigned)dest_stride, (unsigned)n_rows);
+
+    auto mat1_sub = submatrix(mat1, 0u, 0u, n_rows, mat1.columns());
+    auto mat2_sub = submatrix(mat2, 0u, 0u, n_cols, mat2.columns());
+
+    if (b.conjugate_on_copy)
+        mat2_sub = blaze::ctrans(mat1_sub);
+    else
+        mat2_sub = blaze::trans(mat1_sub);
+
+    /*
+    std::vector<T> b_elems(block_dim);
+    for (int block = 0; block < n_blocks; ++block) {
+        int block_i = block / n_blocks_col;
+        int block_j = block % n_blocks_col;
+        if (block_i == block_j) {
+            int upper_i = std::min(n_rows, block_i + block_dim);
+            int upper_j = std::min(n_cols, block_j + block_dim);
+            for (int i = block_i; i < upper_i; ++i) {
+                for (int j = block_j; j < upper_j; ++j) {
                     // (i, j) in the original block, column-major
                     auto el = b.data[j * b.stride + i];
                     // auto el = b.local_element(i, j);
                     // (j, i) in the send buffer, column-major
                     if (b.conjugate_on_copy)
                         el = conjugate(el);
-                    dest_ptr[i*dest_stride + j] = el;
+                    b_elems[j-block_j] = el;
+                }
+                for (int j = block_j; j < upper_j; ++j) {
+                    dest_ptr[i*dest_stride + j] = b_elems[j-block_j];
+                }
+            }
+        } else {
+            int upper_i = std::min(n_rows, block_i + block_dim);
+            int upper_j = std::min(n_cols, block_j + block_dim);
+            // #pragma omp task firstprivate(block_i, block_j, dest_ptr, ptr, stride, conj, n_rows_t)
+            for (int i = block_i; i < upper_i; ++i) {
+                for (int j = block_j; j < upper_j; ++j) {
+                    // (i, j) in the original block, column-major
+                    auto el = b.data[j * b.stride + i];
+                    // auto el = b.local_element(i, j);
+                    // (j, i) in the send buffer, column-major
+                    if (b.conjugate_on_copy)
+                        el = conjugate(el);
+                    dest_ptr[i*dest_stride + j] = b_elems[j-block_j];
                 }
             }
         }
     }
-}
-
-template <typename T>
-void copy_transposed_back(const T* src_ptr, block<T> b) {
-    static_assert(std::is_trivially_copyable<T>(),
-                  "Element type must be trivially copyable!");
-    for (int i = 0; i < b.n_rows(); ++i) {
-        for (int j = 0; j < b.n_cols(); ++j) {
-            // (i, j) in the recv buffer, column-major
-            // (i, j) in the original block, column-major
-            // b.local_element(j, i) = src_ptr[j * b.n_rows() + i];
-            b.data[j * b.stride + i] = src_ptr[j * b.n_rows() + i];
-        }
-    }
+    */
 }
 } // namespace memory
 } // namespace grid2grid

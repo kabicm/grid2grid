@@ -46,6 +46,10 @@ struct grid_cover {
         cols_cover = get_decomp_cover(g1.cols_split, g2.cols_split);
     }
 
+    block_cover decompose_block(const block_coordinates& b) {
+        return {rows_cover[b.row], cols_cover[b.col]};
+    }
+
     template <typename T>
     block_cover decompose_block(const block<T> &b) {
         int row_index = b.coordinates.row;

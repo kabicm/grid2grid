@@ -40,6 +40,11 @@ bool interval::operator!=(const interval &other) const {
     return !(*this == other);
 }
 
+bool interval::operator<(const interval &other) const {
+    return start < other.start || 
+           (start == other.start && end < other.end);
+}
+
 /*
 finds intervals from v that overlap with [start, end),
 i.e. finds start_index and end_index
