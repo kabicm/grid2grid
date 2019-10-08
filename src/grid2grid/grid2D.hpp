@@ -91,6 +91,9 @@ class assigned_grid2D {
         return os;
     }
 
+    int num_rows() const noexcept { return g.rows_split.back(); }
+    int num_cols() const noexcept { return g.cols_split.back(); }
+
   private:
     friend bool operator==(assigned_grid2D const &,
                            assigned_grid2D const &) noexcept;

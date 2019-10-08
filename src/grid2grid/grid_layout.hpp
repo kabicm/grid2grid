@@ -34,6 +34,9 @@ class grid_layout {
         return grid.ranks_reordered();
     }
 
+    int num_cols() const noexcept { return grid.num_cols(); }
+    int num_rows() const noexcept { return grid.num_rows(); }
+
     assigned_grid2D grid;
     local_blocks<T> blocks;
 };
