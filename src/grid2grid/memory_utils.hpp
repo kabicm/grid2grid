@@ -60,14 +60,11 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
 
 // copy from block to MPI send buffer
 template <typename T>
-void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
+void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride,
+                        T* dest_ptr, int dest_stride, bool conjugate_on_copy) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
-    assert(b.non_empty());
     // n_rows and n_cols before transposing
-    int n_rows = b.n_cols();
-    int n_cols = b.n_rows();
-
     int block_dim = std::max(8, 128/(int)sizeof(T));
 
     int n_blocks_row = (n_rows+block_dim-1)/block_dim;
@@ -84,10 +81,10 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
             for (int i = block_i; i < upper_i; ++i) {
                 for (int j = block_j; j < upper_j; ++j) {
                     // (i, j) in the original block, column-major
-                    auto el = b.data[j * b.stride + i];
+                    auto el = src_ptr[j * src_stride + i];
                     // auto el = b.local_element(i, j);
                     // (j, i) in the send buffer, column-major
-                    if (b.conjugate_on_copy)
+                    if (conjugate_on_copy)
                         el = conjugate(el);
                     b_elems[j-block_j] = el;
                 }
@@ -102,10 +99,10 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
             for (int i = block_i; i < upper_i; ++i) {
                 for (int j = block_j; j < upper_j; ++j) {
                     // (i, j) in the original block, column-major
-                    auto el = b.data[j * b.stride + i];
+                    auto el = src_ptr[j * src_stride + i];
                     // auto el = b.local_element(i, j);
                     // (j, i) in the send buffer, column-major
-                    if (b.conjugate_on_copy)
+                    if (conjugate_on_copy)
                         el = conjugate(el);
                     dest_ptr[i*dest_stride + j] = b_elems[j-block_j];
                 }
@@ -113,5 +110,13 @@ void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
         }
     }
 }
+
+// copy from block to MPI send buffer
+template <typename T>
+void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
+    assert(b.non_empty());
+    copy_and_transpose(b.data, b.n_cols(), b.n_rows(), b.stride, dest_ptr, dest_stride, b.conjugate_on_copy);
+}
+
 } // namespace memory
 } // namespace grid2grid
