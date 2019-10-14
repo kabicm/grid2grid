@@ -73,11 +73,13 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
 
     std::vector<T> b_elems(block_dim);
     for (int block = 0; block < n_blocks; ++block) {
-        int block_i = block / n_blocks_col;
-        int block_j = block % n_blocks_col;
+        int block_i = (block / n_blocks_col) * block_dim;
+        int block_j = (block % n_blocks_col) * block_dim;
+
+        int upper_i = std::min(n_rows, block_i + block_dim);
+        int upper_j = std::min(n_cols, block_j + block_dim);
+
         if (block_i == block_j) {
-            int upper_i = std::min(n_rows, block_i + block_dim);
-            int upper_j = std::min(n_cols, block_j + block_dim);
             for (int i = block_i; i < upper_i; ++i) {
                 for (int j = block_j; j < upper_j; ++j) {
                     // (i, j) in the original block, column-major
@@ -93,18 +95,16 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
                 }
             }
         } else {
-            int upper_i = std::min(n_rows, block_i + block_dim);
-            int upper_j = std::min(n_cols, block_j + block_dim);
             // #pragma omp task firstprivate(block_i, block_j, dest_ptr, ptr, stride, conj, n_rows_t)
             for (int i = block_i; i < upper_i; ++i) {
                 for (int j = block_j; j < upper_j; ++j) {
-                    // (i, j) in the original block, column-major
                     auto el = src_ptr[j * src_stride + i];
+                    // (i, j) in the original block, column-major
                     // auto el = b.local_element(i, j);
                     // (j, i) in the send buffer, column-major
                     if (conjugate_on_copy)
                         el = conjugate(el);
-                    dest_ptr[i*dest_stride + j] = b_elems[j-block_j];
+                    dest_ptr[i*dest_stride + j] = el;
                 }
             }
         }
