@@ -1,4 +1,5 @@
 #include <grid2grid/communication_data.hpp>
+#include <grid2grid/tiling_manager.hpp>
 
 #include <complex>
 #include <omp.h>
@@ -99,7 +100,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
 }
 
 template <typename T>
-void copy_block_to_buffer(block<T> b, T *dest_ptr) {
+void copy_block_to_buffer(block<T> b, T *dest_ptr, memory::tiling_manager<T>& tiling) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
     if (!b.transpose_on_copy)
@@ -111,7 +112,7 @@ void copy_block_to_buffer(block<T> b, T *dest_ptr) {
         // in the buffer without any stride
         // (we make the buffer packed)
         int dest_stride = b.n_rows();
-        memory::copy_and_transpose(b, dest_ptr, dest_stride);
+        memory::copy_and_transpose(b, dest_ptr, dest_stride, tiling);
         // b.stride = b.n_cols();
     }
 }
@@ -124,26 +125,24 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
 
 template <typename T>
 void communication_data<T>::copy_to_buffer() {
-    // std::cout << "commuication data.copy_to_buffer()" << std::endl;
-// #pragma omp parallel for schedule(dynamic, 1)
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
+        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        int target_rank = m.get_rank();
-        // std::cout << "rank = " << rank << std::endl;
-        copy_block_to_buffer(b, data() + offset_per_message[i]);
+        copy_block_to_buffer(b, data() + offset_per_message[i], tiling);
     }
 }
 
 template <typename T>
 void communication_data<T>::copy_to_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
-// #pragma omp parallel for schedule(dynamic, 1)
+#pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        int target_rank = m.get_rank();
-        copy_block_to_buffer(b, data() + offset_per_message[i]);
+        copy_block_to_buffer(b, data() + offset_per_message[i], tiling);
     }
 }
 
@@ -152,9 +151,9 @@ void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        int target_rank = m.get_rank();
         copy_block_from_buffer(data() + offset_per_message[i], b);
     }
 }
@@ -165,7 +164,6 @@ void communication_data<T>::copy_from_buffer() {
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        int target_rank = m.get_rank();
         copy_block_from_buffer(data() + offset_per_message[i], b);
     }
 }
@@ -176,13 +174,13 @@ T *communication_data<T>::data() {
 }
 
 template <typename T>
-void copy_block_to_block(block<T>& src, block<T>& dest) {
+void copy_block_to_block(block<T>& src, block<T>& dest, memory::tiling_manager<T>&tiling) {
     // std::cout << "copy buffer->block" << std::endl;
     if (!src.transpose_on_copy) {
         memory::copy2D(src.size(), src.data, src.stride, dest.data, dest.stride);
     } else {
         // transpose and conjugate if necessary while copying
-        memory::copy_and_transpose(src, dest.data, dest.stride);
+        memory::copy_and_transpose(src, dest.data, dest.stride, tiling);
     }
 }
 
@@ -191,6 +189,8 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
+        memory::tiling_manager<T> tiling;
+
         auto& block_src = from[i];
         auto& block_dest = to[i];
         assert(block_src.non_empty());
@@ -199,7 +199,7 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
         // destination block cannot be transposed
         assert(!block_dest.transpose_on_copy);
 
-        copy_block_to_block(block_src, block_dest);
+        copy_block_to_block(block_src, block_dest, tiling);
     }
 }
 

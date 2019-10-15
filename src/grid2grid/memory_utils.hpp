@@ -1,5 +1,6 @@
 #pragma once
 #include <grid2grid/block.hpp>
+#include <grid2grid/tiling_manager.hpp>
 
 #include <algorithm>
 #include <cstring>
@@ -8,6 +9,7 @@
 #include <type_traits>
 #include <utility>
 #include <omp.h>
+#include <memory>
 
 namespace grid2grid {
 namespace memory {
@@ -61,20 +63,27 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
 // copy from block to MPI send buffer
 template <typename T>
 void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride,
-                        T* dest_ptr, int dest_stride, bool conjugate_on_copy) {
+                        T* dest_ptr, int dest_stride, bool conjugate_on_copy, 
+                        tiling_manager<T>& tiling) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
     // n_rows and n_cols before transposing
-    int block_dim = std::max(8, 128/(int)sizeof(T));
+    // int block_dim = std::max(8, 128/(int)sizeof(T));
+    int block_dim = tiling.block_dim;
 
     int n_blocks_row = (n_rows+block_dim-1)/block_dim;
     int n_blocks_col = (n_cols+block_dim-1)/block_dim;
     int n_blocks = n_blocks_row * n_blocks_col;
 
-    std::vector<T> b_elems(block_dim);
+    int n_threads = std::min(n_blocks, 2);
+
+#pragma omp parallel for num_threads(n_threads)
     for (int block = 0; block < n_blocks; ++block) {
-        int block_i = (block / n_blocks_col) * block_dim;
-        int block_j = (block % n_blocks_col) * block_dim;
+        int thread_id = omp_get_thread_num();
+        int b_offset = thread_id * block_dim;
+
+        int block_i = (block % n_blocks_row) * block_dim;
+        int block_j = (block / n_blocks_row) * block_dim;
 
         int upper_i = std::min(n_rows, block_i + block_dim);
         int upper_j = std::min(n_cols, block_j + block_dim);
@@ -88,10 +97,10 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
                     // (j, i) in the send buffer, column-major
                     if (conjugate_on_copy)
                         el = conjugate(el);
-                    b_elems[j-block_j] = el;
+                    tiling.buffer[b_offset + j-block_j] = el;
                 }
                 for (int j = block_j; j < upper_j; ++j) {
-                    dest_ptr[i*dest_stride + j] = b_elems[j-block_j];
+                    dest_ptr[i*dest_stride + j] = tiling.buffer[b_offset + j-block_j];
                 }
             }
         } else {
@@ -113,9 +122,9 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
 
 // copy from block to MPI send buffer
 template <typename T>
-void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
+void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride, tiling_manager<T>& tiling) {
     assert(b.non_empty());
-    copy_and_transpose(b.data, b.n_cols(), b.n_rows(), b.stride, dest_ptr, dest_stride, b.conjugate_on_copy);
+    copy_and_transpose(b.data, b.n_cols(), b.n_rows(), b.stride, dest_ptr, dest_stride, b.conjugate_on_copy, tiling);
 }
 
 } // namespace memory
