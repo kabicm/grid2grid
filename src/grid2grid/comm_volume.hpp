@@ -1,5 +1,7 @@
 #pragma once
 #include <unordered_map>
+#include <cassert>
+#include <iostream>
 
 namespace grid2grid {
 struct edge_t {
