@@ -1,6 +1,6 @@
 #include <grid2grid/ranks_reordering.hpp>
 
-std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_ranks) {
+std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_ranks, bool& reordered) {
     std::vector<bool> visited(n_ranks, false);
 
     // identity permutation
@@ -9,6 +9,7 @@ std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_r
     for (size_t i = 0; i < n_ranks; ++i) {
         permutation.push_back(i);
     }
+    reordered = false;
 
     std::vector<weighted_edge_t> sorted_edges;
     sorted_edges.reserve(comm_volume.volume.size());
@@ -19,11 +20,16 @@ std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_r
         int dest = e.dest;
 
         // w += comm_volume.volume[edge_t{dest, src}];
-        w *= 2;
+        if (src == dest) {
+            w *= 2;
+            ++w;
+        }
         w -= comm_volume.volume[edge_t{src, src}];
         w -= comm_volume.volume[edge_t{dest, dest}];
 
-        sorted_edges.push_back(weighted_edge_t(src, dest, w));
+        if (w) {
+            sorted_edges.push_back(weighted_edge_t(src, dest, w));
+        }
     }
 
     // sort the edges by weights (decreasing order)
@@ -39,6 +45,8 @@ std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_r
             // take this edge to perfect matching
             permutation[edge.src()] = edge.dest();
             permutation[edge.dest()] = edge.src();
+            if (edge.src() != edge.dest())
+                reordered = true;
         }
 
         // no adjecent edge to these vertices
