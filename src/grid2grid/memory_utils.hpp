@@ -62,9 +62,8 @@ void copy2D(const std::pair<size_t, size_t> &block_dim,
 
 // copy from block to MPI send buffer
 template <typename T>
-void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride,
-                        T* dest_ptr, int dest_stride, bool conjugate_on_copy, 
-                        tiling_manager<T>& tiling) {
+void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride, T* dest_ptr, int dest_stride, bool conjugate_on_copy, 
+        tiling_manager<T>& tiling) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
     // n_rows and n_cols before transposing
@@ -75,7 +74,7 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
     int n_blocks_col = (n_cols+block_dim-1)/block_dim;
     int n_blocks = n_blocks_row * n_blocks_col;
 
-    int n_threads = std::min(n_blocks, 2);
+    int n_threads = std::min(n_blocks, tiling.max_threads);
 
 #pragma omp parallel for num_threads(n_threads)
     for (int block = 0; block < n_blocks; ++block) {
@@ -118,6 +117,19 @@ void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const in
             }
         }
     }
+}
+
+template <typename T>
+void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride, T* dest_ptr, int dest_stride, bool conjugate_on_copy) {
+    memory::tiling_manager<T> tiling;
+    copy_and_transpose(src_ptr, n_rows, n_cols, src_stride, dest_ptr, dest_stride, conjugate_on_copy, tiling);
+}
+
+// copy from block to MPI send buffer
+template <typename T>
+void copy_and_transpose(const block<T> b, T* dest_ptr, int dest_stride) {
+    assert(b.non_empty());
+    copy_and_transpose(b.data, b.n_cols(), b.n_rows(), b.stride, dest_ptr, dest_stride, b.conjugate_on_copy);
 }
 
 // copy from block to MPI send buffer

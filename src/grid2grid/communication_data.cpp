@@ -1,5 +1,4 @@
 #include <grid2grid/communication_data.hpp>
-#include <grid2grid/tiling_manager.hpp>
 
 #include <complex>
 #include <omp.h>
@@ -100,7 +99,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
 }
 
 template <typename T>
-void copy_block_to_buffer(block<T> b, T *dest_ptr, memory::tiling_manager<T>& tiling) {
+void copy_block_to_buffer(block<T> b, T *dest_ptr) {
     // std::cout << "copy block->buffer: " << b << std::endl;
     // std::cout << "copy block->buffer" << std::endl;
     if (!b.transpose_on_copy)
@@ -112,7 +111,7 @@ void copy_block_to_buffer(block<T> b, T *dest_ptr, memory::tiling_manager<T>& ti
         // in the buffer without any stride
         // (we make the buffer packed)
         int dest_stride = b.n_rows();
-        memory::copy_and_transpose(b, dest_ptr, dest_stride, tiling);
+        memory::copy_and_transpose(b, dest_ptr, dest_stride);
         // b.stride = b.n_cols();
     }
 }
@@ -127,10 +126,9 @@ template <typename T>
 void communication_data<T>::copy_to_buffer() {
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0; i < mpi_messages.size(); ++i) {
-        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        copy_block_to_buffer(b, data() + offset_per_message[i], tiling);
+        copy_block_to_buffer(b, data() + offset_per_message[i]);
     }
 }
 
@@ -139,10 +137,9 @@ void communication_data<T>::copy_to_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
-        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
-        copy_block_to_buffer(b, data() + offset_per_message[i], tiling);
+        copy_block_to_buffer(b, data() + offset_per_message[i]);
     }
 }
 
@@ -151,7 +148,6 @@ void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
-        memory::tiling_manager<T> tiling;
         const auto &m = mpi_messages[i];
         block<T> b = m.get_block();
         copy_block_from_buffer(data() + offset_per_message[i], b);
@@ -174,13 +170,13 @@ T *communication_data<T>::data() {
 }
 
 template <typename T>
-void copy_block_to_block(block<T>& src, block<T>& dest, memory::tiling_manager<T>&tiling) {
+void copy_block_to_block(block<T>& src, block<T>& dest) {
     // std::cout << "copy buffer->block" << std::endl;
     if (!src.transpose_on_copy) {
         memory::copy2D(src.size(), src.data, src.stride, dest.data, dest.stride);
     } else {
         // transpose and conjugate if necessary while copying
-        memory::copy_and_transpose(src, dest.data, dest.stride, tiling);
+        memory::copy_and_transpose(src, dest.data, dest.stride);
     }
 }
 
@@ -189,8 +185,6 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
-        memory::tiling_manager<T> tiling;
-
         auto& block_src = from[i];
         auto& block_dest = to[i];
         assert(block_src.non_empty());
@@ -199,7 +193,7 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
         // destination block cannot be transposed
         assert(!block_dest.transpose_on_copy);
 
-        copy_block_to_block(block_src, block_dest, tiling);
+        copy_block_to_block(block_src, block_dest);
     }
 }
 
@@ -224,14 +218,4 @@ template void
 copy_local_blocks(std::vector<block<std::complex<float>>>& from, std::vector<block<std::complex<float>>>& to);
 template void
 copy_local_blocks(std::vector<block<std::complex<double>>>& from, std::vector<block<std::complex<double>>>& to);
-
-// template instantiation for copy_block_to_block
-// template void
-// copy_block_to_block(block<double>& src, block<double>& dest);
-// template void
-// copy_block_to_block(block<float>& src, block<float>& dest);
-// template void
-// copy_block_to_block(block<std::complex<float>>& src, block<std::complex<float>>& dest);
-// template void
-// copy_block_to_block(block<std::complex<double>>& src, block<std::complex<double>>& dest);
 } // namespace grid2grid

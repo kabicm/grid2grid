@@ -206,12 +206,19 @@ bool block<T>::non_empty() const {
 
 template <typename T>
 bool block<T>::operator<(const block &other) const {
-    return cols_interval < other.cols_interval ||
-           (cols_interval == other.cols_interval &&
-            rows_interval < other.rows_interval) ||
-           (cols_interval == other.cols_interval &&
-            rows_interval == other.rows_interval &&
-            tag < other.tag);
+    bool tags_less = tag < other.tag;
+    bool tags_equal = tag == other.tag;
+    bool cols_less = cols_interval < other.cols_interval;
+    bool cols_equal = cols_interval == other.cols_interval;
+    bool rows_less = rows_interval < other.rows_interval;
+    bool rows_equal = rows_interval == other.rows_interval;
+
+    bool blocks_less = cols_less || 
+                       (cols_equal && rows_less);
+    bool blocks_equal = cols_equal && rows_equal;
+
+    return blocks_less || (blocks_equal && tags_less);
+
     // return cols_interval.start < other.cols_interval.start ||
     //        (cols_interval.start == other.cols_interval.start &&
     //         rows_interval.start < other.rows_interval.start);
