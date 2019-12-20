@@ -17,7 +17,7 @@ For each i, the following must hold:
 struct grid2D {
     // number of blocks in a row
     int n_rows = 0;
-    // number of columns in a row
+    // number of blocks in a column
     int n_cols = 0;
     // defines how rows are split
     std::vector<int> rows_split;
@@ -91,8 +91,13 @@ class assigned_grid2D {
         return os;
     }
 
-    int num_rows() const noexcept { return g.rows_split.back(); }
-    int num_cols() const noexcept { return g.cols_split.back(); }
+    int num_rows() const noexcept { 
+        return g.n_rows;
+    }
+
+    int num_cols() const noexcept { 
+        return g.n_cols;
+    }
 
   private:
     friend bool operator==(assigned_grid2D const &,

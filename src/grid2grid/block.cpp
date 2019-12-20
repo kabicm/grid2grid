@@ -186,7 +186,7 @@ block<T> block<T>::subblock(interval r_range, interval c_range) const {
              (r_range.start - r_interval.start);
     // std::cout << "stride = " << stride << std::endl;
     // std::cout << "ptr offset = " << (ptr - data) << std::endl;
-    block<T> b(r_range, c_range, coordinates, ptr, stride);
+    block<T> b(r_range, c_range, coord, ptr, stride); // correct
     char flag = transpose_on_copy ? 'T' : 'N';
     if (conjugate_on_copy)
         flag = 'C';

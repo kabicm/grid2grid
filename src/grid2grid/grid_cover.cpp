@@ -4,6 +4,11 @@ namespace grid2grid {
 std::vector<interval_cover>
 get_decomp_cover(const std::vector<int> &decomp_blue,
                  const std::vector<int> &decomp_red) {
+    if (decomp_blue.back() != decomp_red.back()) {
+        std::cout << "ERROR in grid_cover.cpp, init and final layouts not of the same size."
+            << std::endl;
+        std::cout << "First one: " << decomp_blue.back() << ", the other one: " << decomp_red.back() << std::endl;
+    }
 #ifdef DEBUG
     std::cout << "decomp_blue = " << std::endl;
     for (const auto &v : decomp_blue) {
