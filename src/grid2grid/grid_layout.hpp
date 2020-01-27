@@ -34,8 +34,15 @@ class grid_layout {
         return grid.ranks_reordered();
     }
 
+    // returns the number of rows and column in the matrix
+    // that this grid represents, and not the number of blocks
+    // in a row or column of the grid
     int num_cols() const noexcept { return grid.num_cols(); }
     int num_rows() const noexcept { return grid.num_rows(); }
+
+    // returns the number of blocks in a row/column of the grid
+    int num_blocks_col() const noexcept { return grid.num_blocks_col(); }
+    int num_blocks_row() const noexcept { return grid.num_blocks_row(); }
 
     assigned_grid2D grid;
     local_blocks<T> blocks;
