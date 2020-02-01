@@ -19,8 +19,8 @@ bool operator==(assigned_grid2D const &lhs,
         - 0 <= cols_split[i] < n_cols
 */
 grid2D::grid2D(std::vector<int> &&r_split, std::vector<int> &&c_split)
-    : n_rows(r_split.size() - 1)
-    , n_cols(c_split.size() - 1)
+    : n_rows(r_split.size() ? r_split.size() - 1 : 0)
+    , n_cols(c_split.size() ? c_split.size() - 1 : 0)
     , rows_split(std::forward<std::vector<int>>(r_split))
     , cols_split(std::forward<std::vector<int>>(c_split)) {}
 

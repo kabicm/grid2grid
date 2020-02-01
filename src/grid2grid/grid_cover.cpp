@@ -4,7 +4,6 @@ namespace grid2grid {
 std::vector<interval_cover>
 get_decomp_cover(const std::vector<int> &decomp_blue,
                  const std::vector<int> &decomp_red) {
-    assert(decomp_blue.back() == decomp_red.back());
 #ifdef DEBUG
     std::cout << "decomp_blue = " << std::endl;
     for (const auto &v : decomp_blue) {
@@ -18,6 +17,7 @@ get_decomp_cover(const std::vector<int> &decomp_blue,
     }
     std::cout << std::endl;
 #endif
+    assert(decomp_blue.back() == decomp_red.back());
 
     std::vector<interval_cover> cover;
     cover.reserve(decomp_blue.size() - 1);

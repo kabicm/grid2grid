@@ -34,6 +34,9 @@ class grid_layout {
         return grid.ranks_reordered();
     }
 
+    int num_blocks_col() const noexcept { return grid.num_blocks_col(); }
+    int num_blocks_row() const noexcept { return grid.num_blocks_row(); }
+
     int num_cols() const noexcept { return grid.num_cols(); }
     int num_rows() const noexcept { return grid.num_rows(); }
 

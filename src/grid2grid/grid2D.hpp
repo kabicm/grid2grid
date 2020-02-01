@@ -90,13 +90,20 @@ class assigned_grid2D {
         }
         return os;
     }
-
-    int num_rows() const noexcept { 
+    int num_blocks_row() const noexcept { 
         return g.n_rows;
     }
 
-    int num_cols() const noexcept { 
+    int num_blocks_col() const noexcept { 
         return g.n_cols;
+    }
+
+    int num_rows() const noexcept { 
+        return g.rows_split.back();
+    }
+
+    int num_cols() const noexcept { 
+        return g.cols_split.back();
     }
 
   private:
