@@ -90,13 +90,6 @@ class assigned_grid2D {
         }
         return os;
     }
-    int num_blocks_row() const noexcept { 
-        return g.n_rows;
-    }
-
-    int num_blocks_col() const noexcept { 
-        return g.n_cols;
-    }
 
     // returns the number of rows/cols in the grid
     // i.e. the number of blocks in a row/col of the grid
