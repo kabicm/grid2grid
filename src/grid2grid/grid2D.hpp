@@ -82,8 +82,8 @@ class assigned_grid2D {
     bool ranks_reordered() const;
 
     friend std::ostream &operator<<(std::ostream &os, const assigned_grid2D &other) {
-        for (int i = 0; i < other.grid().n_rows; ++i) {
-            for (int j = 0; j < other.grid().n_cols; ++j) {
+        for (int i = 0; i < other.num_blocks_row(); ++i) {
+            for (int j = 0; j < other.num_blocks_col(); ++j) {
                 os << "block (" << i << ", " << j << ") owned by " 
                    << other.owner(i, j) << std::endl;
             }
@@ -98,6 +98,17 @@ class assigned_grid2D {
         return g.n_cols;
     }
 
+    // returns the number of rows/cols in the grid
+    // i.e. the number of blocks in a row/col of the grid
+    int num_blocks_row() const noexcept { 
+        return g.n_rows;
+    }
+
+    int num_blocks_col() const noexcept {
+        return g.n_cols;
+    }
+
+    // returns the number of rows/cols in the matrix
     int num_rows() const noexcept { 
         return g.rows_split.back();
     }
