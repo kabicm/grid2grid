@@ -150,7 +150,7 @@ communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
     std::vector<message<T>> messages =
         decompose_blocks(init_layout, final_layout);
     merge_messages(messages);
-    return communication_data<T>(messages, rank, final_layout.num_ranks());
+    return communication_data<T>(messages, rank, std::max(final_layout.num_ranks(), init_layout.num_ranks()));
 }
 
 template <typename T>
@@ -166,7 +166,7 @@ communication_data<T> prepare_to_send(
         auto& final_layout = to[i].get();
         auto decomposed_blocks = decompose_blocks(init_layout, final_layout, i);
         messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
-        n_ranks = std::max(n_ranks, final_layout.num_ranks());
+        n_ranks = std::max(n_ranks, std::max(final_layout.num_ranks(), init_layout.num_ranks()));
     }
     merge_messages(messages);
     return communication_data<T>(messages, rank, n_ranks);
@@ -179,7 +179,7 @@ communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout);
     merge_messages(messages);
-    return communication_data<T>(messages, rank, init_layout.num_ranks());
+    return communication_data<T>(messages, rank, std::max(init_layout.num_ranks(), final_layout.num_ranks()));
 }
 
 template <typename T>
@@ -195,7 +195,7 @@ communication_data<T> prepare_to_recv(
         auto& final_layout = to[i].get();
         auto decomposed_blocks = decompose_blocks(final_layout, init_layout, i);
         messages.insert(messages.end(), decomposed_blocks.begin(), decomposed_blocks.end());
-        n_ranks = std::max(n_ranks, init_layout.num_ranks());
+        n_ranks = std::max(n_ranks, std::max(init_layout.num_ranks(), final_layout.num_ranks()));
     }
     merge_messages(messages);
     return communication_data<T>(messages, rank, n_ranks);
@@ -481,7 +481,11 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
 template <typename T>
 void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
     PE(transform_irecv);
-    MPI_Request recv_reqs[recv_data.n_packed_messages];
+    MPI_Request* recv_reqs;
+    // protect from empty data
+    if (recv_data.n_packed_messages) {
+        recv_reqs = new MPI_Request[recv_data.n_packed_messages];
+    }
     int request_idx = 0;
     // initiate all receives
     for (unsigned i = 0u; i < recv_data.n_ranks; ++i) {
@@ -503,7 +507,10 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
     PL();
 
     PE(transform_isend);
-    MPI_Request send_reqs[send_data.n_packed_messages];
+    MPI_Request* send_reqs;
+    if (send_data.n_packed_messages) {
+        send_reqs = new MPI_Request[send_data.n_packed_messages];
+    }
     request_idx = 0;
     // initiate all sends
     for (unsigned i = 0u; i < send_data.n_ranks; ++i) {
@@ -542,7 +549,9 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
 
     PE(transform_waitall);
     // finish up the send requests since all the receive requests are finished
-    MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    if (send_data.n_packed_messages) {
+        MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+    }
     PL();
 }
 
@@ -615,6 +624,7 @@ void transform(grid_layout<T> &initial_layout,
 
     // perform the communication
     exchange_async(send_data, recv_data, comm);
+    // exchange(send_data, recv_data, comm);
 #ifdef DEBUG
     if (rank == 0) {
         std::cout << "recv buffer content: " << std::endl;
@@ -641,6 +651,7 @@ void transform(std::vector<layout_ref<T>>& from,
     auto recv_data = prepare_to_recv(to, from, rank);
 
     exchange_async(send_data, recv_data, comm);
+    // exchange(send_data, recv_data, comm);
 }
 
 template void transform<float>(grid_layout<float> &initial_layout,

@@ -124,43 +124,51 @@ void copy_block_from_buffer(T *src_ptr, block<T> &b) {
 
 template <typename T>
 void communication_data<T>::copy_to_buffer() {
+    if (mpi_messages.size()) {
 #pragma omp parallel for schedule(dynamic, 1)
-    for (unsigned i = 0; i < mpi_messages.size(); ++i) {
-        const auto &m = mpi_messages[i];
-        block<T> b = m.get_block();
-        copy_block_to_buffer(b, data() + offset_per_message[i]);
+        for (unsigned i = 0; i < mpi_messages.size(); ++i) {
+            const auto &m = mpi_messages[i];
+            block<T> b = m.get_block();
+            copy_block_to_buffer(b, data() + offset_per_message[i]);
+        }
     }
 }
 
 template <typename T>
 void communication_data<T>::copy_to_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
+    if (package_ticks[idx+1] - package_ticks[idx]) {
 #pragma omp parallel for schedule(dynamic, 1)
-    for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
-        const auto &m = mpi_messages[i];
-        block<T> b = m.get_block();
-        copy_block_to_buffer(b, data() + offset_per_message[i]);
+        for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+            const auto &m = mpi_messages[i];
+            block<T> b = m.get_block();
+            copy_block_to_buffer(b, data() + offset_per_message[i]);
+        }
     }
 }
 
 template <typename T>
 void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
+    if (package_ticks[idx+1] - package_ticks[idx]) {
 #pragma omp parallel for schedule(dynamic, 1)
-    for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
-        const auto &m = mpi_messages[i];
-        block<T> b = m.get_block();
-        copy_block_from_buffer(data() + offset_per_message[i], b);
+        for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
+            const auto &m = mpi_messages[i];
+            block<T> b = m.get_block();
+            copy_block_from_buffer(data() + offset_per_message[i], b);
+        }
     }
 }
 
 template <typename T>
 void communication_data<T>::copy_from_buffer() {
+    if (mpi_messages.size()) {
 #pragma omp parallel for schedule(dynamic, 1)
-    for (unsigned i = 0; i < mpi_messages.size(); ++i) {
-        const auto &m = mpi_messages[i];
-        block<T> b = m.get_block();
-        copy_block_from_buffer(data() + offset_per_message[i], b);
+        for (unsigned i = 0; i < mpi_messages.size(); ++i) {
+            const auto &m = mpi_messages[i];
+            block<T> b = m.get_block();
+            copy_block_from_buffer(data() + offset_per_message[i], b);
+        }
     }
 }
 
@@ -183,6 +191,7 @@ void copy_block_to_block(block<T>& src, block<T>& dest) {
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
+    if (from.size()) {
 #pragma omp parallel for schedule(dynamic, 1)
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
@@ -194,6 +203,7 @@ void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
         assert(!block_dest.transpose_on_copy);
 
         copy_block_to_block(block_src, block_dest);
+    }
     }
 }
 
