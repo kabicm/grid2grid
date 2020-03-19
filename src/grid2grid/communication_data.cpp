@@ -192,7 +192,7 @@ template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to) {
     assert(from.size() == to.size());
     if (from.size()) {
-#pragma omp parallel for schedule(dynamic, 1)
+#pragma omp parallel for
     for (unsigned i = 0u; i < from.size(); ++i) {
         auto& block_src = from[i];
         auto& block_dest = to[i];

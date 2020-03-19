@@ -547,10 +547,15 @@ void exchange_async(communication_data<T>& send_data, communication_data<T>& rec
         PL();
     }
 
+    if (recv_data.n_packed_messages) {
+        delete[] recv_reqs;
+    }
+
     PE(transform_waitall);
     // finish up the send requests since all the receive requests are finished
     if (send_data.n_packed_messages) {
         MPI_Waitall(send_data.n_packed_messages, send_reqs, MPI_STATUSES_IGNORE);
+        delete[] send_reqs;
     }
     PL();
 }
