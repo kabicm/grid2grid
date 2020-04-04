@@ -289,6 +289,7 @@ void block<T>::transpose_or_conjugate(char flag) {
 
 template <typename T>
 void block<T>::scale_by(T beta) {
+    if (beta == T{1}) return;
     // if transposed on copy, we do not know
     // if copy has already occured, so we do not
     // want to take a risk, just disable it.

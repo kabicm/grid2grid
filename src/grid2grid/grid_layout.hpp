@@ -45,6 +45,7 @@ class grid_layout {
     int num_blocks_row() const noexcept { return grid.num_blocks_row(); }
 
     void scale_by(const T beta) {
+        if (beta == T{1}) return;
         // iterate over all local blocks
         // local_blocks contains only blocks within the specified submatrix
         for (unsigned i = 0u; i < blocks.num_blocks(); ++i) {
