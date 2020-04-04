@@ -33,10 +33,10 @@ block_range::block_range(interval r, interval c)
     , cols_interval(c) {}
 
 bool block_range::outside_of(const block_range &range) const {
-    return (rows_interval.end < range.rows_interval.start ||
-            rows_interval.start > range.rows_interval.end) &&
-           (cols_interval.end < range.cols_interval.start ||
-            cols_interval.end < range.cols_interval.start);
+    return (rows_interval.end <= range.rows_interval.start ||
+            rows_interval.start >= range.rows_interval.end) &&
+           (cols_interval.end <= range.cols_interval.start ||
+            cols_interval.end <= range.cols_interval.start);
 }
 
 bool block_range::inside(const block_range &range) const {
@@ -285,6 +285,24 @@ void block<T>::transpose_or_conjugate(char flag) {
 
     if (flag == 'C')
         conjugate_on_copy = true;
+}
+
+template <typename T>
+void block<T>::scale_by(T beta) {
+    // if transposed on copy, we do not know
+    // if copy has already occured, so we do not
+    // want to take a risk, just disable it.
+    assert(transpose_on_copy == false);
+
+    int num_rows = n_rows();
+    int num_cols = n_cols();
+
+    for (int lj = 0; lj < num_cols; ++lj) {
+        for (int li = 0; li < num_rows; ++li) {
+            int offset = stride * lj + li;
+            data[offset] *= beta;
+        }
+    }
 }
 
 template <typename T>

@@ -129,6 +129,8 @@ struct block {
     T &local_element(int li, int lj);
 
     void transpose_or_conjugate(char flag);
+
+    void scale_by(T beta);
 };
 
 template <typename T>
