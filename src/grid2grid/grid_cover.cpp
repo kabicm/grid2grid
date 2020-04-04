@@ -1,6 +1,56 @@
 #include <grid2grid/grid_cover.hpp>
 
 namespace grid2grid {
+/*
+template <typename T>
+int find_right_cover(const std::vector<T>& v, const T value) {
+    if (v.size() == 0 || value < v[0] || value > v.back())
+        return -1;
+
+    int left = 0;
+    int right = v.size();
+    int result = -1;
+
+    while (right >= left) {
+        int mid = (left + right) / 2;
+        if (v[mid] >= value && (mid == 0 || v[mid-1] < value)) {
+            result = mid;
+            break;
+        }
+        if (v[mid] >= value)
+            right = mid;
+        else
+            left = mid + 1;
+    }
+
+    return result;
+}
+
+template <typename T>
+int find_left_cover(const std::vector<T>& v, const T value) {
+    if (v.size() == 0 || value < v[0] || value > v.back())
+        return -1;
+
+    int left = 0;
+    int right = v.size();
+    int result = -1;
+
+    while (right >= left) {
+        int mid = (left + right) / 2;
+        if (v[mid] <= value && (mid == v.size() - 1 || v[mid+1] > value)) {
+            result = mid;
+            break;
+        }
+        if (v[mid] <= value)
+            left = mid + 1;
+        else
+            right = mid;
+    }
+
+    return result;
+}
+*/
+
 std::vector<interval_cover>
 get_decomp_cover(const std::vector<int> &decomp_blue,
                  const std::vector<int> &decomp_red) {

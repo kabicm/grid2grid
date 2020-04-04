@@ -44,6 +44,15 @@ class grid_layout {
     int num_blocks_col() const noexcept { return grid.num_blocks_col(); }
     int num_blocks_row() const noexcept { return grid.num_blocks_row(); }
 
+    void scale_by(const T beta) {
+        // iterate over all local blocks
+        // local_blocks contains only blocks within the specified submatrix
+        for (unsigned i = 0u; i < blocks.num_blocks(); ++i) {
+            auto& block = blocks.get_block(i);
+            block.scale_by(beta);
+        }
+    }
+
     assigned_grid2D grid;
     local_blocks<T> blocks;
 };
