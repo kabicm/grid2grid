@@ -8,6 +8,7 @@ endif()
 option(GRID2GRID_WITH_EXAMPLES "Enable examples." ${MASTER_PROJECT})
 option(GRID2GRID_WITH_INSTALL "Enable installation." ${MASTER_PROJECT})
 option(GRID2GRID_WITH_PROFILING "Enable profiling." OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries." OFF)
 
 project(grid2grid VERSION 0.1 LANGUAGES CXX)
 
