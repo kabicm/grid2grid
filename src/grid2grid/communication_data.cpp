@@ -83,7 +83,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
         }
     }
 
-    buffer = std::unique_ptr<T[]>(new T[total_size]);
+    // buffer = std::unique_ptr<T[]>(new T[total_size]);
     for (unsigned i = 1; i < (unsigned)n_ranks; ++i) {
         dspls[i] = dspls[i - 1] + counts[i - 1];
     }
@@ -174,7 +174,21 @@ void communication_data<T>::copy_from_buffer() {
 
 template <typename T>
 T *communication_data<T>::data() {
-    return buffer.get();
+    // if the user provided the buffer, use it
+    if (assigned_buffer != nullptr) {
+        return assigned_buffer;
+    } else {
+        // allocate the buffer if not yet allocated
+        if (!buffer) {
+            buffer = std::unique_ptr<T[]>(new T[total_size]);
+        }
+        return buffer.get();
+    }
+}
+
+template <typename T>
+void communication_data<T>::assign_workspace(T* ptr) {
+    assigned_buffer = ptr;
 }
 
 template <typename T>

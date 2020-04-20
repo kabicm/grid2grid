@@ -659,6 +659,13 @@ void transform(std::vector<layout_ref<T>>& from,
     // exchange(send_data, recv_data, comm);
 }
 
+template <typename T>
+void transform(communication_data<T> &send_data,
+               communication_data<T> &recv_data,
+               MPI_Comm comm) {
+    exchange_async(send_data, recv_data, comm);
+}
+
 template void transform<float>(grid_layout<float> &initial_layout,
                                grid_layout<float> &final_layout,
                                MPI_Comm comm);
@@ -695,6 +702,23 @@ template void transform<std::complex<double>>(
                                std::vector<layout_ref<std::complex<double>>>& initial_layouts,
                                std::vector<layout_ref<std::complex<double>>>& final_layouts,
                                MPI_Comm comm);
+
+// explicit instantiation of transform with communication_data
+template void transform<float>(communication_data<float>& send_data,
+                               communication_data<float>& recv_data,
+                               MPI_Comm comm);
+template void transform<double>(communication_data<double>& send_data,
+                               communication_data<double>& recv_data,
+                               MPI_Comm comm);
+template void transform<std::complex<float>>(
+                               communication_data<std::complex<float>>& send_data,
+                               communication_data<std::complex<float>>& recv_data,
+                               MPI_Comm comm);
+template void transform<std::complex<double>>(
+                              communication_data<std::complex<double>>& send_data,
+                              communication_data<std::complex<double>>& recv_data,
+                              MPI_Comm comm);
+
 
 template grid_layout<float>
 get_scalapack_grid(int lld,

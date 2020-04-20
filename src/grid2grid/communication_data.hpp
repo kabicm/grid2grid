@@ -31,6 +31,7 @@ template <typename T>
 class communication_data {
   public:
     std::unique_ptr<T[]> buffer;
+    T* assigned_buffer = nullptr;
     // std::vector<double, cosma::mpi_allocator<double>> buffer;
     std::vector<int> dspls;
     std::vector<int> counts;
@@ -66,6 +67,9 @@ class communication_data {
     T *data();
 
     void partition_messages();
+
+    // user-provided buffer to be used
+    void assign_workspace(T* ptr);
 
   private:
     std::vector<int> package_ticks;

@@ -20,6 +20,10 @@
 #include <utility>
 
 namespace grid2grid {
+
+template <typename T>
+using layout_ref = std::reference_wrapper<grid_layout<T>>;
+
 // template <typename T>
 // grid_layout<T> get_scalapack_grid(scalapack::data_layout& layout,
 //                               T *ptr, int rank);
@@ -72,12 +76,34 @@ grid_layout<T>
 get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank);
 
 template <typename T>
-void transform(grid_layout<T> &initial_layout,
-               grid_layout<T> &final_layout,
+communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
+                                      const grid_layout<T> &final_layout,
+                                      int rank);
+
+template <typename T>
+communication_data<T> prepare_to_send(
+                                      std::vector<layout_ref<T>>& from,
+                                      std::vector<layout_ref<T>>& to,
+                                      int rank);
+template <typename T>
+communication_data<T> prepare_to_recv(
+                                      std::vector<layout_ref<T>>& to,
+                                      std::vector<layout_ref<T>>& from,
+                                      int rank);
+template <typename T>
+communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
+                                      const grid_layout<T> &init_layout,
+                                      int rank);
+
+template <typename T>
+void transform(communication_data<T> &send_data,
+               communication_data<T> &recv_data,
                MPI_Comm comm);
 
 template <typename T>
-using layout_ref = std::reference_wrapper<grid_layout<T>>;
+void transform(grid_layout<T> &initial_layout,
+               grid_layout<T> &final_layout,
+               MPI_Comm comm);
 
 template <typename T>
 void transform(std::vector<layout_ref<T>>& initial_layouts,
