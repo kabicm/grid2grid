@@ -5,9 +5,14 @@ namespace grid2grid {
 interval::interval(int start, int end)
     : start(start)
     , end(end) {
+    if (start < 0 || end < 0) {
+        throw std::runtime_error(
+            "ERROR: in class interval (grid2grid): start, end > 0 must be satisfied.");
+    }
+
     if (start > end) {
         throw std::runtime_error(
-            "ERROR: in class interval, start<=end must be satisfied.");
+            "ERROR: in class interval (grid2grid): start<=end must be satisfied.");
     }
 }
 
