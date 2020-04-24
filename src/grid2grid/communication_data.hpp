@@ -64,7 +64,11 @@ class communication_data {
     // received from the same rank
     void copy_from_buffer(int idx);
 
-    T *data();
+    T *data() const;
+
+    // check if the user provided the mpi buffer
+    // and if not: allocates a new one
+    void initialize_buffer_ptr();
 
     void partition_messages();
 
