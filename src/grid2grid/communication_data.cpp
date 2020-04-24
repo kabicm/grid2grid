@@ -173,22 +173,25 @@ void communication_data<T>::copy_from_buffer() {
 }
 
 template <typename T>
-T *communication_data<T>::data() {
-    // if the user provided the buffer, use it
-    if (assigned_buffer != nullptr) {
-        return assigned_buffer;
-    } else {
-        // allocate the buffer if not yet allocated
+T *communication_data<T>::data() const {
+    return assigned_buffer;
+}
+
+template <typename T>
+void communication_data<T>::initialize_buffer_ptr() {
+    // if the user didn't provide the buffer, allocate a new one
+    if (assigned_buffer == nullptr) {
         if (!buffer) {
             buffer = std::unique_ptr<T[]>(new T[total_size]);
         }
-        return buffer.get();
+        assigned_buffer = buffer.get();
     }
 }
 
 template <typename T>
 void communication_data<T>::assign_workspace(T* ptr) {
     assigned_buffer = ptr;
+    buffer.reset();
 }
 
 template <typename T>

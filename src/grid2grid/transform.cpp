@@ -407,6 +407,11 @@ get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank) {
 
 template <typename T>
 void exchange(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
+    // this checks if the user has already provided the temporary MPI buffers
+    // and if not, allocates the new ones
+    send_data.initialize_buffer_ptr();
+    recv_data.initialize_buffer_ptr();
+
     MPI_Request recv_reqs[recv_data.n_packed_messages];
 
     PE(transform_irecv);
@@ -480,6 +485,11 @@ void exchange(communication_data<T>& send_data, communication_data<T>& recv_data
 
 template <typename T>
 void exchange_async(communication_data<T>& send_data, communication_data<T>& recv_data, MPI_Comm comm) {
+    // this checks if the user has already provided the temporary MPI buffers
+    // and if not, allocates the new ones
+    send_data.initialize_buffer_ptr();
+    recv_data.initialize_buffer_ptr();
+
     PE(transform_irecv);
     MPI_Request* recv_reqs;
     // protect from empty data
