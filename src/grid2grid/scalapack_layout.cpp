@@ -65,7 +65,7 @@ std::tuple<int, int> local_coordinate(int glob_coord,
     int idx_block_proc = idx_block / p_block_dimension;
     int owner = idx_block % p_block_dimension;
 
-    return {idx_block_proc * block_dimension + idx_in_block, owner};
+    return std::make_tuple(idx_block_proc * block_dimension + idx_in_block, owner);
 }
 
 // global->local coordinates
