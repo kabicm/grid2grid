@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 
+include(GNUInstallDirs)
+
 set(MASTER_PROJECT OFF)
 if(NOT DEFINED PROJECT_NAME)
     set(MASTER_PROJECT ON)
@@ -39,7 +41,6 @@ endif()
 
 if(GRID2GRID_WITH_INSTALL)
     include(CMakePackageConfigHelpers)
-    include(GNUInstallDirs)
     
     install(EXPORT grid2grid_targets
             FILE grid2gridTargets.cmake
