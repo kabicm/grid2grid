@@ -101,19 +101,19 @@ struct comm_volume {
     }
 
     comm_volume operator+(const comm_volume& other) const {
-        volume_t sum_comm_vol;
-        for (const auto& vol : volume) {
-            auto& e = vol.first;
-            auto w = vol.second;
-            sum_comm_vol[e.sorted()] += w;
-            // sum_comm_vol[e] += w;
-        }
+      comm_volume res;
+      for (const auto& vol : volume) {
+	auto& e = vol.first;
+	auto w = vol.second;
+	res.volume[e.sorted()] += w;
+	// sum_comm_vol[e] += w;
+      }
         for (const auto& vol : other.volume) {
             auto& e = vol.first;
             auto w = vol.second;
-            sum_comm_vol[e.sorted()] += w;
+            res.volume[e.sorted()] += w;
         }
-        return sum_comm_vol;
+        return res;
     }
 
     size_t total_volume() {
