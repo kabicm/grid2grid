@@ -63,6 +63,10 @@ class communication_data {
     // received from the same rank
     void copy_from_buffer(int idx);
 
+    // copies from buffer and performs: dest = beta * dest + alpha * src
+    // where src refers to the data in the buffer and dest this communication data
+    void copy_from_buffer_and_scale(int idx, T alpha, T beta);
+
     T *data();
 
     void partition_messages();
@@ -74,4 +78,9 @@ class communication_data {
 
 template <typename T>
 void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to);
+
+template <typename T>
+void copy_local_blocks_and_scale(std::vector<block<T>>& from, 
+                                 std::vector<block<T>>& to,
+                                 T alpha, T beta);
 } // namespace grid2grid
