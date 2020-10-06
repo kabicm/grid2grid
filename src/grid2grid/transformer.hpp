@@ -41,8 +41,8 @@ struct transformer {
 
     void transform() {
         assert(alpha.size() == beta.size());
-        if (alpha.size() > 0 && beta.size) {
-            grid2grid::transform<T>(from, to, comm, &alpha[0], &beta[0]);
+        if (alpha.size() > 0 && beta.size() > 0) {
+            grid2grid::transform<T>(from, to, &alpha[0], &beta[0], comm);
         } else {
             grid2grid::transform<T>(from, to, comm);
         }
