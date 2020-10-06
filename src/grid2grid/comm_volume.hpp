@@ -103,10 +103,9 @@ struct comm_volume {
     comm_volume operator+(const comm_volume& other) const {
       comm_volume res;
       for (const auto& vol : volume) {
-	auto& e = vol.first;
-	auto w = vol.second;
-	res.volume[e.sorted()] += w;
-	// sum_comm_vol[e] += w;
+          auto& e = vol.first;
+          auto w = vol.second;
+          res.volume[e.sorted()] += w;
       }
         for (const auto& vol : other.volume) {
             auto& e = vol.first;

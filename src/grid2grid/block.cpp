@@ -306,6 +306,18 @@ void block<T>::scale_by(T beta) {
     }
 }
 
+/*
+template <typename T>
+void block<T>::scale_on_copy(T scalar) {
+    this->scalar = scalar;
+}
+
+template <typename T>
+void block<T>::clear_after_transform(T scalar) {
+    this->scalar = std::nullopt;
+}
+*/
+
 template <typename T>
 local_blocks<T>::local_blocks(std::vector<block<T>> &&blocks)
     : blocks(std::forward<std::vector<block<T>>>(blocks)) {

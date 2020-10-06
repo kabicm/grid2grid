@@ -70,6 +70,8 @@ struct block {
     bool transpose_on_copy = false;
     bool conjugate_on_copy = false;
 
+    // std::optional<T> scalar = std::nullopt;
+
     block_coordinates coordinates;
 
     T *data = nullptr;
@@ -130,7 +132,17 @@ struct block {
 
     void transpose_or_conjugate(char flag);
 
+    // scales the local block by beta
     void scale_by(T beta);
+
+    /*
+    // schedules the local block to be scaled
+    // during transform (packing/unpacking)
+    void scale_on_copy(T scalar);
+
+    // clears the states that were pending on transform
+    void clear_after_transform();
+    */
 };
 
 template <typename T>

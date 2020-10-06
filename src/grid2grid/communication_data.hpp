@@ -5,11 +5,11 @@
 #include <chrono>
 #include <memory>
 #include <vector>
+#include <optional>
 
 namespace grid2grid {
 template <typename T>
 class message {
-
   public:
     message() = default;
 
@@ -21,6 +21,9 @@ class message {
 
     // implementing comparator
     bool operator<(const message<T> &other) const;
+
+    std::optional<T> alpha = std::nullopt;
+    std::optional<T> beta = std::nullopt;
 
   private:
     block<T> b;
@@ -39,7 +42,7 @@ class communication_data {
     std::vector<message<T>> mpi_messages;
     // blocks which should be copied locally,
     // and not through MPI
-    std::vector<block<T>> local_blocks;
+    std::vector<message<T>> local_messages;
     int n_ranks = 0;
     int total_size = 0;
     int my_rank;
@@ -77,10 +80,10 @@ class communication_data {
 };
 
 template <typename T>
-void copy_local_blocks(std::vector<block<T>>& from, std::vector<block<T>>& to);
+void copy_local_blocks(std::vector<message<T>>& from, std::vector<message<T>>& to);
 
 template <typename T>
-void copy_local_blocks_and_scale(std::vector<block<T>>& from, 
-                                 std::vector<block<T>>& to,
+void copy_local_blocks_and_scale(std::vector<message<T>>& from, 
+                                 std::vector<message<T>>& to,
                                  T alpha, T beta);
 } // namespace grid2grid

@@ -9,6 +9,11 @@ template <typename T>
 struct transformer {
     std::vector<layout_ref<T>> from;
     std::vector<layout_ref<T>> to;
+
+    // scaling scalars for source and destination
+    std::vector<T> alpha;
+    std::vector<T> beta;
+
     MPI_Comm comm;
     int P;
     int rank;
@@ -27,17 +32,28 @@ struct transformer {
         to.push_back(to_layout);
     }
 
+    void schedule(grid_layout<T>& from_layout, grid_layout<T>& to_layout,
+                  T alpha, T beta) {
+        this->alpha.push_back(alpha);
+        this->beta.push_back(beta);
+        schedule(from_layout, to_layout);
+    }
+
     void transform() {
-        grid2grid::transform<T>(from, to, comm);
-        // for (unsigned i = 0u; i < from.size(); ++i) {
-        //     grid2grid::transform<T>(from[i], to[i], comm);
-        // }
+        assert(alpha.size() == beta.size());
+        if (alpha.size() > 0 && beta.size) {
+            grid2grid::transform<T>(from, to, comm, &alpha[0], &beta[0]);
+        } else {
+            grid2grid::transform<T>(from, to, comm);
+        }
         clear();
     }
 
     void clear() {
         from.clear();
         to.clear();
+        alpha.clear();
+        beta.clear();
     }
 };
 }

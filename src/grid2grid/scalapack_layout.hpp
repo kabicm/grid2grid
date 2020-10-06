@@ -1,4 +1,6 @@
 #pragma once
+#include <grid2grid/grid_layout.hpp>
+
 #include <cassert>
 #include <cmath>
 #include <initializer_list>
@@ -375,4 +377,52 @@ bool validate(Function f,
     return correct;
 }
 } // namespace scalapack
+
+// The following two definitions are the same with the exception of a const
+//
+template <typename T>
+grid_layout<T>
+get_scalapack_grid(int lld_m_dim,                  // local leading dim
+                   scalapack::matrix_dim m_dim,    // global matrix size
+                   scalapack::elem_grid_coord ij,  // start of submatrix
+                   scalapack::matrix_dim subm_dim, // dim of submatrix
+                   scalapack::block_dim b_dim,     // block dimension
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   char transpose,
+                   scalapack::rank_grid_coord rank_src,
+                   T *ptr,
+                   const int rank);
+
+template <typename T>
+grid_layout<T>
+get_scalapack_grid(int lld_m_dim,                  // local leading dim
+                   scalapack::matrix_dim m_dim,    // global matrix size
+                   scalapack::elem_grid_coord ij,  // start of submatrix
+                   scalapack::matrix_dim subm_dim, // dim of submatrix
+                   scalapack::block_dim b_dim,     // block dimension
+                   scalapack::rank_decomposition r_grid,
+                   scalapack::ordering rank_grid_ordering,
+                   char transpose,
+                   scalapack::rank_grid_coord rank_src,
+                   const T *ptr,
+                   const int rank);
+
+// There is not submatrix support here.
+//
+template <typename T>
+grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
+                                  scalapack::block_dim b_dim,
+                                  scalapack::rank_decomposition r_grid,
+                                  scalapack::ordering rank_grid_ordering,
+                                  T *ptr,
+                                  int rank);
+
+// Provides a more conveninet wasy to pass arguments. There is no submatrix
+// support.
+//
+template <typename T>
+grid_layout<T>
+get_scalapack_grid(scalapack::data_layout &layout, T *ptr, int rank);
+
 } // namespace grid2grid

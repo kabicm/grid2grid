@@ -1,4 +1,5 @@
 #include <grid2grid/ranks_reordering.hpp>
+#include <algorithm>
 
 std::vector<int> grid2grid::optimal_reordering(comm_volume& comm_volume, int n_ranks, bool& reordered) {
     std::vector<bool> visited(n_ranks, false);

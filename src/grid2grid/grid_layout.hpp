@@ -44,6 +44,7 @@ class grid_layout {
     int num_blocks_col() const noexcept { return grid.num_blocks_col(); }
     int num_blocks_row() const noexcept { return grid.num_blocks_row(); }
 
+    // scales all local blocks by beta
     void scale_by(const T beta) {
         if (beta == T{1}) return;
         // iterate over all local blocks
@@ -56,6 +57,10 @@ class grid_layout {
 
     assigned_grid2D grid;
     local_blocks<T> blocks;
+    // std::optional<T> scalar = std::nullopt;
 };
+
+template <typename T>
+using layout_ref = std::reference_wrapper<grid_layout<T>>;
 
 } // namespace grid2grid

@@ -79,7 +79,7 @@ communication_data<T>::communication_data(std::vector<message<T>> &messages,
             total_size += b.total_size();
             prev_rank = target_rank;
         } else {
-            local_blocks.push_back(b);
+            local_messages.push_back(m);
         }
     }
 
@@ -155,20 +155,6 @@ void communication_data<T>::copy_to_buffer(int idx) {
 }
 
 template <typename T>
-void communication_data<T>::copy_from_buffer_and_scale(int idx, T alpha, T beta) {
-    assert(idx >= 0 && idx+1 < package_ticks.size());
-    if (package_ticks[idx+1] - package_ticks[idx]) {
-#pragma omp parallel for schedule(dynamic, 1)
-        for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
-            const auto &m = mpi_messages[i];
-            block<T> b = m.get_block();
-            copy_block_from_buffer_and_scale(data() + offset_per_message[i], b, 
-                                   alpha, beta);
-        }
-    }
-}
-
-template <typename T>
 void communication_data<T>::copy_from_buffer(int idx) {
     assert(idx >= 0 && idx+1 < package_ticks.size());
     if (package_ticks[idx+1] - package_ticks[idx]) {
@@ -176,7 +162,12 @@ void communication_data<T>::copy_from_buffer(int idx) {
         for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
             const auto &m = mpi_messages[i];
             block<T> b = m.get_block();
-            copy_block_from_buffer(data() + offset_per_message[i], b);
+            if (m.alpha || m.beta) {
+                copy_block_from_buffer_and_scale(data() + offset_per_message[i], b, 
+                                                 m.alpha.value(), m.beta.value());
+            } else {
+                copy_block_from_buffer(data() + offset_per_message[i], b);
+            }
         }
     }
 }
@@ -188,7 +179,12 @@ void communication_data<T>::copy_from_buffer() {
         for (unsigned i = 0; i < mpi_messages.size(); ++i) {
             const auto &m = mpi_messages[i];
             block<T> b = m.get_block();
-            copy_block_from_buffer(data() + offset_per_message[i], b);
+            if (m.alpha || m.beta) {
+                copy_block_from_buffer_and_scale(data() + offset_per_message[i], b,
+                                                 m.alpha.value(), m.beta.value());
+            } else {
+                copy_block_from_buffer(data() + offset_per_message[i], b);
+            }
         }
     }
 }
@@ -199,18 +195,7 @@ T *communication_data<T>::data() {
 }
 
 template <typename T>
-void copy_block_to_block(block<T>& src, block<T>& dest) {
-    // std::cout << "copy buffer->block" << std::endl;
-    if (!src.transpose_on_copy) {
-        memory::copy2D(src.size(), src.data, src.stride, dest.data, dest.stride);
-    } else {
-        // transpose and conjugate if necessary while copying
-        memory::copy_and_transpose(src, dest.data, dest.stride);
-    }
-}
-
-template <typename T>
-void copy_block_to_block_and_scale(block<T>& src, block<T>& dest,
+void copy_block_to_block_and_scale(block<T>& src, block<T>& dest, 
                                    T alpha, T beta) {
     // std::cout << "copy buffer->block" << std::endl;
     if (!src.transpose_on_copy) {
@@ -225,42 +210,44 @@ void copy_block_to_block_and_scale(block<T>& src, block<T>& dest,
 }
 
 template <typename T>
-void copy_local_blocks(std::vector<block<T>>& from,
-                       std::vector<block<T>>& to) {
+void copy_block_to_block(block<T>& src, block<T>& dest) {
+    // std::cout << "copy buffer->block" << std::endl;
+    if (!src.transpose_on_copy) {
+        memory::copy2D(src.size(), src.data, src.stride, 
+                       dest.data, dest.stride);
+    } else {
+        // transpose and conjugate if necessary while copying
+        memory::copy_and_transpose(src, dest.data, dest.stride);
+    }
+}
+
+template <typename T>
+void copy_local_blocks(std::vector<message<T>>& from,
+                       std::vector<message<T>>& to) {
     assert(from.size() == to.size());
     if (from.size()) {
 #pragma omp parallel for
         for (unsigned i = 0u; i < from.size(); ++i) {
-            auto& block_src = from[i];
-            auto& block_dest = to[i];
+            assert(from[i].alpha == to[i].alpha);
+            assert(from[i].beta == to[i].beta);
+            auto block_src = from[i].get_block();
+            auto block_dest = to[i].get_block();
             assert(block_src.non_empty());
             assert(block_dest.non_empty());
             assert(block_src.total_size() == block_dest.total_size());
             // destination block cannot be transposed
             assert(!block_dest.transpose_on_copy);
 
-            copy_block_to_block(block_src, block_dest);
-    }
-    }
-}
+            const auto& alpha = from[i].alpha;
+            const auto& beta = from[i].beta;
 
-template <typename T>
-void copy_local_blocks_and_scale(std::vector<block<T>>& from,
-                       std::vector<block<T>>& to,
-                       T alpha, T beta) {
-    assert(from.size() == to.size());
-    if (from.size()) {
-#pragma omp parallel for
-    for (unsigned i = 0u; i < from.size(); ++i) {
-        auto& block_src = from[i];
-        auto& block_dest = to[i];
-        assert(block_src.non_empty());
-        assert(block_dest.non_empty());
-        assert(block_src.total_size() == block_dest.total_size());
-        // destination block cannot be transposed
-        assert(!block_dest.transpose_on_copy);
-
-        copy_block_to_block_and_scale(block_src, block_dest, alpha, beta);
+            if (alpha || beta) {
+                copy_block_to_block_and_scale(block_src, block_dest,
+                                    alpha.value(),
+                                    beta.value());
+            } else {
+                copy_block_to_block(block_src, block_dest);
+            }
     }
     }
 }
@@ -279,29 +266,15 @@ template class message<std::complex<float>>;
 
 // template instantiation for copy_local_blocks
 template void
-copy_local_blocks(std::vector<block<double>>& from, std::vector<block<double>>& to);
+copy_local_blocks(std::vector<message<double>>& from, 
+                  std::vector<message<double>>& to);
 template void
-copy_local_blocks(std::vector<block<float>>& from, std::vector<block<float>>& to);
+copy_local_blocks(std::vector<message<float>>& from, 
+                  std::vector<message<float>>& to);
 template void
-copy_local_blocks(std::vector<block<std::complex<float>>>& from, std::vector<block<std::complex<float>>>& to);
+copy_local_blocks(std::vector<message<std::complex<float>>>& from, 
+                  std::vector<message<std::complex<float>>>& to);
 template void
-copy_local_blocks(std::vector<block<std::complex<double>>>& from, std::vector<block<std::complex<double>>>& to);
-
-// template instantiation for copy_local_blocks_and_scale
-template void
-copy_local_blocks_and_scale(std::vector<block<double>>& from, 
-                            std::vector<block<double>>& to,
-                            double alpha, double beta);
-template void
-copy_local_blocks_and_scale(std::vector<block<float>>& from, 
-                            std::vector<block<float>>& to,
-                            float alpha, float beta);
-template void
-copy_local_blocks_and_scale(std::vector<block<std::complex<float>>>& from, 
-                            std::vector<block<std::complex<float>>>& to,
-                            std::complex<float> alpha, std::complex<float> beta);
-template void
-copy_local_blocks_and_scale(std::vector<block<std::complex<double>>>& from, 
-                            std::vector<block<std::complex<double>>>& to,
-                            std::complex<double> alpha, std::complex<double> beta);
+copy_local_blocks(std::vector<message<std::complex<double>>>& from, 
+                  std::vector<message<std::complex<double>>>& to);
 } // namespace grid2grid

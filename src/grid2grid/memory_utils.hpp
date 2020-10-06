@@ -29,6 +29,10 @@ void copy_and_scale(std::size_t n,
                     elem_type alpha, elem_type beta) {
     static_assert(std::is_trivially_copyable<elem_type>(),
                   "Element type must be trivially copyable!");
+    if (alpha == elem_type{1} && beta == elem_type{0}) {
+        copy(n, src_ptr, dest_ptr);
+        return;
+    }
     for (int i = 0; i < n; ++i) {
         dest_ptr[i] = beta * dest_ptr[i] + alpha * src_ptr[i];
     }
@@ -85,6 +89,10 @@ void copy2D_and_scale(const std::pair<size_t, size_t> &block_dim,
             ) {
     static_assert(std::is_trivially_copyable<elem_type>(),
                   "Element type must be trivially copyable!");
+    if (alpha == elem_type{1} && beta == elem_type{0}) {
+        copy2D(block_dim, src_ptr, ld_src, dest_ptr, ld_dest, col_major);
+        return;
+    }
     auto block_size = block_dim.first * block_dim.second;
     // std::cout << "invoking copy2D." << std::endl;
     if (!block_size) {
@@ -115,8 +123,11 @@ void copy2D_and_scale(const std::pair<size_t, size_t> &block_dim,
 
 // copy from block to MPI send buffer
 template <typename T>
-void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, const int src_stride, T* dest_ptr, int dest_stride, bool conjugate_on_copy,
-        tiling_manager<T>& tiling) {
+void copy_and_transpose(T* src_ptr, const int n_rows, const int n_cols, 
+                        const int src_stride, 
+                        T* dest_ptr, int dest_stride, 
+                        bool conjugate_on_copy,
+                        tiling_manager<T>& tiling) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
     // n_rows and n_cols before transposing
@@ -184,6 +195,11 @@ void copy_transpose_and_scale(T* src_ptr,
                               T alpha, T beta) {
     static_assert(std::is_trivially_copyable<T>(),
             "Element type must be trivially copyable!");
+    if (alpha == T{1} && beta == T{0}) {
+        copy_and_transpose(src_ptr, n_rows, n_cols, src_stride,
+                           dest_ptr, dest_stride, conjugate_on_copy, tiling);
+        return;
+    }
     // n_rows and n_cols before transposing
     // int block_dim = std::max(8, 128/(int)sizeof(T));
     int block_dim = tiling.block_dim;
