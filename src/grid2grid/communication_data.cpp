@@ -162,9 +162,9 @@ void communication_data<T>::copy_from_buffer(int idx) {
         for (unsigned i = package_ticks[idx]; i < package_ticks[idx+1]; ++i) {
             const auto &m = mpi_messages[i];
             block<T> b = m.get_block();
-            if (m.alpha || m.beta) {
+            if (m.alpha != T{1} || m.beta != T{0}) {
                 copy_block_from_buffer_and_scale(data() + offset_per_message[i], b, 
-                                                 m.alpha.value(), m.beta.value());
+                                                 m.alpha, m.beta);
             } else {
                 copy_block_from_buffer(data() + offset_per_message[i], b);
             }
@@ -179,9 +179,9 @@ void communication_data<T>::copy_from_buffer() {
         for (unsigned i = 0; i < mpi_messages.size(); ++i) {
             const auto &m = mpi_messages[i];
             block<T> b = m.get_block();
-            if (m.alpha || m.beta) {
+            if (m.alpha != T{1} || m.beta != T{0}) {
                 copy_block_from_buffer_and_scale(data() + offset_per_message[i], b,
-                                                 m.alpha.value(), m.beta.value());
+                                                 m.alpha, m.beta);
             } else {
                 copy_block_from_buffer(data() + offset_per_message[i], b);
             }
@@ -241,10 +241,9 @@ void copy_local_blocks(std::vector<message<T>>& from,
             const auto& alpha = from[i].alpha;
             const auto& beta = from[i].beta;
 
-            if (alpha || beta) {
+            if (alpha != T{1} || beta != T{0}) {
                 copy_block_to_block_and_scale(block_src, block_dest,
-                                    alpha.value(),
-                                    beta.value());
+                                    alpha, beta);
             } else {
                 copy_block_to_block(block_src, block_dest);
             }

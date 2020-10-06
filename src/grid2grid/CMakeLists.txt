@@ -24,7 +24,7 @@ if(GRID2GRID_WITH_PROFILING)
     )
 endif()
 
-target_compile_features(grid2grid PUBLIC cxx_std_17)
+target_compile_features(grid2grid PUBLIC cxx_std_11)
 
 if(GRID2GRID_WITH_INSTALL)
     install(TARGETS grid2grid

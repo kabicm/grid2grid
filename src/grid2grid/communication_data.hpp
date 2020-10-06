@@ -5,7 +5,6 @@
 #include <chrono>
 #include <memory>
 #include <vector>
-#include <optional>
 
 namespace grid2grid {
 template <typename T>
@@ -22,8 +21,8 @@ class message {
     // implementing comparator
     bool operator<(const message<T> &other) const;
 
-    std::optional<T> alpha = std::nullopt;
-    std::optional<T> beta = std::nullopt;
+    T alpha = T{1};
+    T beta = T{0};
 
   private:
     block<T> b;
