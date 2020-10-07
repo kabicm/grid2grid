@@ -16,6 +16,8 @@ class grid_layout {
     int num_ranks() const { return grid.num_ranks(); }
 
     void transpose_or_conjugate(char flag) {
+        flag = std::toupper(flag);
+        assert(flag == 'N' || flag == 'T' || flag == 'C');
         if (flag == 'T' || flag == 'C') {
             grid.transpose();
             blocks.transpose_or_conjugate(flag);

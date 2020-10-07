@@ -11,7 +11,7 @@ template <typename T>
 std::vector<message<T>> decompose_block(const block<T> &b,
                                         grid_cover &g_cover,
                                         const assigned_grid2D &g,
-                                        T alpha, T beta) {
+                                        const T alpha, const T beta) {
     // std::cout << "decomposing block " << b << std::endl;
     block_cover b_cover = g_cover.decompose_block(b);
 
@@ -67,7 +67,7 @@ std::vector<message<T>> decompose_block(const block<T> &b,
 template <typename T>
 std::vector<message<T>> decompose_blocks(const grid_layout<T> &init_layout,
                                          const grid_layout<T> &final_layout,
-                                         T alpha, T beta,
+                                         const T alpha, const T beta,
                                          int tag = 0) {
     PE(transform_decompose);
     grid_cover g_overlap(init_layout.grid.grid(), final_layout.grid.grid());
@@ -147,7 +147,7 @@ template <typename T>
 communication_data<T> prepare_to_send(const grid_layout<T> &init_layout,
                                       const grid_layout<T> &final_layout,
                                       int rank,
-                                      T alpha, T beta) {
+                                      const T alpha, const T beta) {
     // in case ranks were reordered to minimize the communication
     // this might not be the identity function
     // if (rank == 0) {
@@ -165,7 +165,7 @@ communication_data<T> prepare_to_send(
                                       std::vector<layout_ref<T>>& from,
                                       std::vector<layout_ref<T>>& to,
                                       int rank,
-                                      T* alpha, T* beta) {
+                                      const T* alpha, const T* beta) {
     std::vector<message<T>> messages;
     int n_ranks = 0;
 
@@ -184,7 +184,7 @@ template <typename T>
 communication_data<T> prepare_to_recv(const grid_layout<T> &final_layout,
                                       const grid_layout<T> &init_layout,
                                       int rank,
-                                      T alpha, T beta) {
+                                      const T alpha, const T beta) {
     std::vector<message<T>> messages =
         decompose_blocks(final_layout, init_layout, alpha, beta);
     merge_messages(messages);
@@ -196,7 +196,7 @@ communication_data<T> prepare_to_recv(
                                       std::vector<layout_ref<T>>& to,
                                       std::vector<layout_ref<T>>& from,
                                       int rank,
-                                      T* alpha, T* beta) {
+                                      const T* alpha, const T* beta) {
     std::vector<message<T>> messages;
     int n_ranks = 0;
 

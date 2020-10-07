@@ -13,6 +13,7 @@ struct transformer {
     // scaling scalars for source and destination
     std::vector<T> alpha;
     std::vector<T> beta;
+    std::vector<char> transpose;
 
     MPI_Comm comm;
     int P;
@@ -33,16 +34,18 @@ struct transformer {
     }
 
     void schedule(grid_layout<T>& from_layout, grid_layout<T>& to_layout,
-                  T alpha, T beta) {
+                  const char trans, const T alpha, const T beta) {
         this->alpha.push_back(alpha);
         this->beta.push_back(beta);
+        this->transpose.push_back(trans);
         schedule(from_layout, to_layout);
     }
 
     void transform() {
         assert(alpha.size() == beta.size());
-        if (alpha.size() > 0 && beta.size() > 0) {
-            grid2grid::transform<T>(from, to, &alpha[0], &beta[0], comm);
+        assert(alpha.size() == transpose.size());
+        if (alpha.size() > 0) {
+            grid2grid::transform<T>(from, to, &transpose[0], &alpha[0], &beta[0], comm);
         } else {
             grid2grid::transform<T>(from, to, comm);
         }
@@ -54,6 +57,7 @@ struct transformer {
         to.clear();
         alpha.clear();
         beta.clear();
+        transpose.clear();
     }
 };
 }

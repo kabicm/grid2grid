@@ -20,7 +20,8 @@ void transform(grid_layout<T> &initial_layout,
 template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
-               T alpha, T beta,
+               const char trans,
+               const T alpha, const T beta,
                MPI_Comm comm);
 
 // redistribute multiple layouts (without scaling):
@@ -37,7 +38,8 @@ void transform(std::vector<layout_ref<T>>& initial_layouts,
 template <typename T>
 void transform(std::vector<layout_ref<T>>& initial_layouts,
                std::vector<layout_ref<T>>& final_layouts,
-               T* alpha, T* beta,
+               const char* trans,
+               const T* alpha, const T* beta,
                MPI_Comm comm);
 
 // compute the communication volume of transformation

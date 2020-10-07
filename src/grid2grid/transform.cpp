@@ -144,8 +144,12 @@ void transform(grid_layout<T> &initial_layout,
 template <typename T>
 void transform(grid_layout<T> &initial_layout,
                grid_layout<T> &final_layout,
-               T alpha, T beta,
+               const char trans,
+               const T alpha, const T beta,
                MPI_Comm comm) {
+    // transpose the initial layout if specified
+    initial_layout.transpose_or_conjugate(trans);
+
     int rank;
     MPI_Comm_rank(comm, &rank);
 
@@ -180,12 +184,18 @@ void transform(std::vector<layout_ref<T>>& from,
 template <typename T>
 void transform(std::vector<layout_ref<T>>& from,
                std::vector<layout_ref<T>>& to,
-               T* alpha, T* beta,
+               const char* trans,
+               const T* alpha, const T* beta,
                MPI_Comm comm) {
     assert(from.size() == to.size());
 
     int rank;
     MPI_Comm_rank(comm, &rank);
+
+    // transpose each initial layout as specified by flags
+    for (unsigned i = 0u; i < from.size(); ++i) {
+        from[i].get().transpose_or_conjugate(trans[i]);
+    }
 
     auto send_data = utils::prepare_to_send(from, to, rank, alpha, beta);
     auto recv_data = utils::prepare_to_recv(to, from, rank, alpha, beta);
@@ -216,24 +226,28 @@ template void transform<std::complex<double>>(
 // (with scaling parameters alpha and beta)
 template void transform<float>(grid_layout<float> &initial_layout,
                                grid_layout<float> &final_layout,
-                               float alpha, float beta,
+                               const char trans,
+                               const float alpha, const float beta,
                                MPI_Comm comm);
 
 template void transform<double>(grid_layout<double> &initial_layout,
                                 grid_layout<double> &final_layout,
-                                double alpha, double beta,
+                                const char trans,
+                                const double alpha, const double beta,
                                 MPI_Comm comm);
 
 template void
 transform<std::complex<float>>(grid_layout<std::complex<float>> &initial_layout,
                                grid_layout<std::complex<float>> &final_layout,
-                               std::complex<float> alpha, std::complex<float> beta,
+                               const char trans,
+                               const std::complex<float> alpha, const std::complex<float> beta,
                                MPI_Comm comm);
 
 template void transform<std::complex<double>>(
     grid_layout<std::complex<double>> &initial_layout,
     grid_layout<std::complex<double>> &final_layout,
-    std::complex<double> alpha, std::complex<double> beta,
+    const char trans,
+    const std::complex<double> alpha, const std::complex<double> beta,
     MPI_Comm comm);
 
 // explicit instantiation of transform with vectors
@@ -259,24 +273,28 @@ template void transform<std::complex<double>>(
 // (with scaling parameters alpha and beta)
 template void transform<float>(std::vector<layout_ref<float>>& initial_layouts,
                                std::vector<layout_ref<float>>& final_layouts,
-                               float* alpha, float* beta,
+                               const char* trans,
+                               const float* alpha, const float* beta,
                                MPI_Comm comm);
 
 template void transform<double>(std::vector<layout_ref<double>>& initial_layouts,
                                 std::vector<layout_ref<double>>& final_layouts,
-                                double* alpha, double* beta,
+                                const char* trans,
+                                const double* alpha, const double* beta,
                                 MPI_Comm comm);
 
 template void transform<std::complex<float>>(
                                std::vector<layout_ref<std::complex<float>>>& initial_layouts,
                                std::vector<layout_ref<std::complex<float>>>& final_layouts,
-                               std::complex<float>* alpha, std::complex<float>* beta,
+                               const char* trans,
+                               const std::complex<float>* alpha, const std::complex<float>* beta,
                                MPI_Comm comm);
 
 template void transform<std::complex<double>>(
                                std::vector<layout_ref<std::complex<double>>>& initial_layouts,
                                std::vector<layout_ref<std::complex<double>>>& final_layouts,
-                               std::complex<double>* alpha, std::complex<double>* beta,
+                               const char* trans,
+                               const std::complex<double>* alpha, const std::complex<double>* beta,
                                MPI_Comm comm);
 
 } // namespace grid2grid
