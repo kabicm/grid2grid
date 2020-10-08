@@ -389,7 +389,6 @@ get_scalapack_grid(int lld_m_dim,                  // local leading dim
                    scalapack::block_dim b_dim,     // block dimension
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    T *ptr,
                    const int rank);
@@ -403,7 +402,6 @@ get_scalapack_grid(int lld_m_dim,                  // local leading dim
                    scalapack::block_dim b_dim,     // block dimension
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const T *ptr,
                    const int rank);

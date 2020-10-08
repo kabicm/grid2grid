@@ -184,7 +184,6 @@ grid_layout<T> get_scalapack_grid(
     scalapack::block_dim blk_shape,             // block dimension
     scalapack::rank_decomposition ranks_grid,
     scalapack::ordering ranks_grid_ordering,
-    char transpose_flag,
     scalapack::rank_grid_coord ranks_grid_src_coord,
     T *ptr,
     const int rank) {
@@ -275,7 +274,6 @@ grid_layout<T> get_scalapack_grid(
         std::move(grid), std::move(owners), ranks_grid.n_total());
     local_blocks<T> local_memory(std::move(loc_blocks));
     grid_layout<T> layout(std::move(assigned_grid), std::move(local_memory));
-    layout.transpose_or_conjugate(transpose_flag);
     return layout;
 }
 
@@ -288,7 +286,6 @@ get_scalapack_grid(int lld,             // local leading dim
                    scalapack::block_dim b_dim,     // block dimension
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const T *ptr,
                    const int rank) {
@@ -300,7 +297,6 @@ get_scalapack_grid(int lld,             // local leading dim
                               b_dim,
                               r_grid,
                               rank_grid_ordering,
-                              transpose,
                               rank_src,
                               const_cast<T *>(ptr),
                               rank);
@@ -326,8 +322,6 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
 
     int stride = n_owning_blocks_row * b_dim.row;
 
-    char transpose = 'N';
-
     return get_scalapack_grid(stride, // local leading dim
                               m_dim,  // global matrix size
                               {1, 1}, // start of submatrix
@@ -335,7 +329,6 @@ grid_layout<T> get_scalapack_grid(scalapack::matrix_dim m_dim,
                               b_dim,  // block dimension
                               r_grid,
                               rank_grid_ordering,
-                              transpose,
                               {0, 0},
                               ptr,
                               rank);
@@ -360,7 +353,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    float *ptr,
                    const int rank);
@@ -373,7 +365,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    double *ptr,
                    const int rank);
@@ -386,7 +377,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    std::complex<float> *ptr,
                    const int rank);
@@ -399,7 +389,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    std::complex<double> *ptr,
                    const int rank);
@@ -412,7 +401,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const float *ptr,
                    const int rank);
@@ -425,7 +413,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const double *ptr,
                    const int rank);
@@ -438,7 +425,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const std::complex<float> *ptr,
                    const int rank);
@@ -451,7 +437,6 @@ get_scalapack_grid(int lld,
                    scalapack::block_dim b_dim,
                    scalapack::rank_decomposition r_grid,
                    scalapack::ordering rank_grid_ordering,
-                   char transpose,
                    scalapack::rank_grid_coord rank_src,
                    const std::complex<double> *ptr,
                    const int rank);
